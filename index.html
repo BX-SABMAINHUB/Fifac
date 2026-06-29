@@ -2,13 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FIFA Mobile Web</title>
-  <!-- Firebase compat CDN -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>FIFA Mobile Web - Ultimate Edition</title>
+  <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-  <!-- Three.js CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+  <!-- Three.js import map -->
   <script type="importmap">
     {
       "imports": {
@@ -18,132 +19,488 @@
     }
   </script>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #111; color: white; overflow: hidden; }
-    .screen { position: absolute; top:0; left:0; width:100%; height:100%; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-    .hidden { display: none !important; }
-    button { background: #2ecc71; border: none; color: white; padding: 12px 24px; border-radius: 8px; font-size: 16px; margin: 6px; cursor: pointer; }
-    button:disabled { background: #555; cursor: not-allowed; }
-    input { padding: 12px; border-radius: 8px; border: none; margin: 6px; width: 250px; font-size: 16px; }
-    .panel { background: #1e1e1e; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-    h1, h2 { margin-bottom: 10px; }
-    .logo-ft { position: fixed; bottom: 10px; right: 10px; font-size: 10px; color: #333; background: none; border: none; cursor: pointer; opacity: 0.5; }
-    .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; max-height: 60vh; overflow-y: auto; padding: 10px; }
-    .player-card { background: #2d2d2d; border-radius: 12px; padding: 10px; text-align: center; }
-    .player-card img { width: 100%; border-radius: 8px; }
-    .game-ui { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; }
-    canvas { display: block; }
+    /* ============ RESET & FULLSCREEN ============ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #0a0f1e;
+      color: #f0f0f0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* ============ PANTALLAS ============ */
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: radial-gradient(circle at center, #1a1f35 0%, #0a0f1e 100%);
+      transition: opacity 0.3s ease;
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .screen.hidden {
+      display: none !important;
+    }
+
+    /* ============ COMPONENTES COMUNES ============ */
+    .card-panel {
+      background: rgba(20, 25, 45, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 30px 25px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, #ffd700, #ffaa00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+      color: #ffd700;
+    }
+
+    button {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 6px 15px rgba(46,204,113,0.3);
+      letter-spacing: 0.5px;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    button:disabled {
+      background: #3a3a4a;
+      box-shadow: none;
+      color: #888;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #e67e22, #d35400);
+      box-shadow: 0 6px 15px rgba(230,126,34,0.3);
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      box-shadow: 0 6px 15px rgba(231,76,60,0.3);
+    }
+
+    input, select {
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.07);
+      color: white;
+      font-size: 1rem;
+      margin: 8px 0;
+      width: 100%;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: #ffd700;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .small-text {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin: 10px 0;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 4px solid rgba(255,215,0,0.2);
+      border-top-color: #ffd700;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 15px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .logo-ft {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.15);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      z-index: 9999;
+      padding: 5px;
+    }
+
+    .logo-ft:hover {
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ============ MERCADO ============ */
+    .market-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      width: 100%;
+      max-height: 65vh;
+      overflow-y: auto;
+      padding: 10px 5px;
+    }
+
+    .player-card {
+      background: linear-gradient(145deg, #2a2d3e, #1e1f2e);
+      border-radius: 20px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid rgba(255,215,0,0.15);
+      transition: transform 0.2s;
+    }
+
+    .player-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .player-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      background: #0f1018;
+    }
+
+    .player-card .name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #ffd700;
+      margin-bottom: 4px;
+    }
+
+    .player-card .price {
+      font-size: 0.9rem;
+      color: #2ecc71;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    /* ============ ALINEACIÓN ============ */
+    .lineup-pitch {
+      width: 100%;
+      max-width: 700px;
+      aspect-ratio: 1.8 / 1;
+      background: linear-gradient(0deg, #2e8b57 0%, #3cb371 50%, #2e8b57 100%);
+      border-radius: 20px;
+      position: relative;
+      margin: 15px 0;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.5);
+      border: 3px solid rgba(255,255,255,0.2);
+      overflow: hidden;
+    }
+
+    .lineup-pitch::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.5);
+      transform: translateY(-50%);
+    }
+
+    .lineup-pitch .center-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60px;
+      height: 60px;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .player-slot {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid rgba(255,215,0,0.7);
+      font-weight: bold;
+      font-size: 0.7rem;
+      color: white;
+      text-align: center;
+      transition: all 0.2s;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+
+    .player-slot.empty {
+      border: 2px dashed rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .player-slot:hover {
+      transform: scale(1.1);
+      z-index: 10;
+    }
+
+    .formation-selector {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    /* ============ GAME SCREEN ============ */
+    #gameCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .game-ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      padding: 15px 20px;
+      border-radius: 20px;
+      z-index: 100;
+      pointer-events: auto;
+    }
+
+    .action-buttons {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 100;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      .card-panel { padding: 20px 15px; }
+      button { padding: 12px 20px; font-size: 0.9rem; }
+      .player-slot { width: 35px; height: 35px; font-size: 0.6rem; }
+    }
   </style>
 </head>
 <body>
   <div id="app">
-    <!-- Pantallas -->
+    <!-- PANTALLA DE LOGIN -->
     <div id="login-screen" class="screen">
-      <div class="panel">
-        <h1>Inicio de Sesión</h1>
-        <input type="email" id="email" placeholder="Correo electrónico" />
-        <input type="password" id="password" placeholder="Contraseña" />
-        <button id="login-btn">Iniciar sesión</button>
-        <button id="register-btn">Crear cuenta</button>
-        <p id="auth-msg" style="color:#e74c3c;"></p>
-        <div id="loading-spinner" class="hidden">⏳ Cargando...</div>
+      <div class="card-panel">
+        <h1>⚽ FIFA Mobile Web</h1>
+        <p style="margin-bottom:20px; color:#ccc;">Inicia sesión para continuar</p>
+        <input type="email" id="login-email" placeholder="Correo electrónico" autocomplete="email" />
+        <input type="password" id="login-password" placeholder="Contraseña" autocomplete="current-password" />
+        <div style="display:flex; gap:10px; margin-top:15px;">
+          <button id="login-btn" style="flex:1;">Iniciar sesión</button>
+          <button id="register-btn" style="flex:1; background: linear-gradient(135deg, #3498db, #2980b9);">Crear cuenta</button>
+        </div>
+        <p id="auth-msg" style="color:#e74c3c; margin-top:12px;"></p>
+        <div id="loading-area" class="hidden">
+          <div class="loading-spinner"></div>
+          <p>⏳ Cargando, por favor espera...</p>
+        </div>
       </div>
     </div>
 
+    <!-- MENÚ PRINCIPAL -->
     <div id="main-menu-screen" class="screen hidden">
-      <div class="panel">
+      <div class="card-panel" style="max-width:600px;">
         <h1>Menú Principal</h1>
-        <p>Monedas: <span id="monedas-display">0</span></p>
-        <button id="lineup-btn">Alineación</button>
-        <button id="play-btn" disabled>Jugar (necesitas jugadores)</button>
-        <button id="market-btn">Mercado</button>
+        <div style="background:rgba(255,215,0,0.1); border-radius:16px; padding:12px; margin:15px 0;">
+          <span style="font-size:1.4rem; color:#ffd700;">💰 <span id="monedas-display">0</span> monedas</span>
+        </div>
+        <button id="lineup-btn" style="width:100%;">📋 Alineación</button>
+        <button id="play-btn" style="width:100%;" disabled>▶️ Jugar (necesitas al menos un jugador)</button>
+        <button id="market-btn" style="width:100%; background: linear-gradient(135deg, #9b59b6, #8e44ad);">🛒 Mercado de fichajes</button>
+        <button id="logout-btn" style="width:100%; background: #555; margin-top:20px;">Cerrar sesión</button>
       </div>
     </div>
 
+    <!-- PANTALLA DE ALINEACIÓN -->
     <div id="lineup-screen" class="screen hidden">
-      <div class="panel">
+      <div class="card-panel" style="max-width:800px; width:100%;">
         <h2>Tu Alineación</h2>
-        <select id="formation-select">
-          <option value="4-4-2">4-4-2</option>
-          <option value="4-3-3">4-3-3</option>
-          <option value="3-5-2">3-5-2</option>
-          <option value="4-2-3-1">4-2-3-1</option>
-          <option value="5-3-2">5-3-2</option>
-        </select>
-        <p>Jugadores en plantilla: <span id="player-count">0</span></p>
-        <button id="save-formation-btn">Guardar</button>
-        <button id="back-from-lineup">Volver</button>
+        <div class="formation-selector">
+          <label style="color:#ffd700;">Formación:</label>
+          <select id="formation-select">
+            <option value="4-4-2">4-4-2</option>
+            <option value="4-3-3">4-3-3</option>
+            <option value="3-5-2">3-5-2</option>
+            <option value="4-2-3-1">4-2-3-1</option>
+            <option value="5-3-2">5-3-2</option>
+            <option value="3-4-3">3-4-3</option>
+            <option value="4-1-4-1">4-1-4-1</option>
+          </select>
+        </div>
+        <!-- Campo de fútbol visual -->
+        <div class="lineup-pitch" id="pitch-container">
+          <div class="center-circle"></div>
+          <!-- Los slots se generarán dinámicamente -->
+        </div>
+        <p style="color:#aaa;">Jugadores en plantilla: <span id="player-count">0</span></p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <button id="save-formation-btn">Guardar formación</button>
+          <button id="back-from-lineup" class="secondary">Volver</button>
+        </div>
+        <!-- Lista de jugadores disponibles para arrastrar a posiciones (simplificado: click para asignar) -->
+        <div id="available-players" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px; justify-content:center;"></div>
       </div>
     </div>
 
+    <!-- MERCADO -->
     <div id="market-screen" class="screen hidden">
-      <div class="panel" style="width:90%; max-width:800px;">
+      <div class="card-panel" style="max-width:900px; width:100%;">
         <h2>Mercado de Fichajes</h2>
         <div class="market-grid" id="market-container"></div>
-        <button id="back-from-market">Volver</button>
+        <button id="back-from-market" class="secondary" style="margin-top:20px;">Volver</button>
       </div>
     </div>
 
+    <!-- PANEL ADMIN (oculto) -->
     <div id="admin-screen" class="screen hidden">
-      <div class="panel">
-        <h2>Panel Administrador</h2>
-        <input type="text" id="player-name" placeholder="Nombre del jugador" />
-        <input type="text" id="player-image" placeholder="URL de la imagen" />
-        <input type="number" id="player-price" placeholder="Precio en monedas" />
-        <button id="add-player-btn">Añadir carta</button>
-        <button id="close-admin">Cerrar</button>
-      </div>
-    </div>
-
-    <div id="game-mode-screen" class="screen hidden">
-      <div class="panel">
-        <h2>Elegir Modo de Juego</h2>
-        <button id="mode-cara">⚽ Cara a Cara (90 min)</button>
-        <button id="mode-ataque">🔥 Ataque Enfrentado</button>
-        <button id="back-from-gamemode">Volver</button>
-      </div>
-    </div>
-
-    <div id="opponent-screen" class="screen hidden">
-      <div class="panel">
-        <h2>Elegir Rival</h2>
-        <button id="vs-bot">🤖 Contra la Máquina</button>
-        <button id="vs-friend">👥 Contra Amigo</button>
-        <select id="difficulty-select" class="hidden">
-          <option value="easy">Fácil</option>
-          <option value="medium" selected>Medio</option>
-          <option value="hard">Difícil</option>
-        </select>
-        <button id="start-match-btn">Empezar Partido</button>
-        <button id="back-from-opponent">Volver</button>
-        <div id="room-controls" class="hidden">
-          <input type="text" id="room-code-input" placeholder="Código de sala" />
-          <button id="join-room-btn">Unirse</button>
-          <button id="create-room-btn">Crear Sala</button>
-          <p id="room-status"></p>
+      <div class="card-panel">
+        <h2>🔧 Panel Administrador</h2>
+        <input type="text" id="admin-player-name" placeholder="Nombre del jugador" />
+        <label style="display:block; margin:10px 0; color:#ccc;">📷 Imagen del jugador:</label>
+        <input type="file" id="admin-player-image-file" accept="image/*" style="background:transparent; border:none; padding:5px;" />
+        <div id="image-preview-container" style="margin:10px 0; max-width:200px; display:none;">
+          <img id="image-preview" src="" alt="Previsualización" style="width:100%; border-radius:12px;" />
         </div>
+        <input type="number" id="admin-player-price" placeholder="Precio en monedas" />
+        <button id="add-player-btn">Añadir al mercado</button>
+        <p id="admin-msg" style="color:#2ecc71; margin-top:10px;"></p>
+        <button id="close-admin" class="secondary">Cerrar</button>
       </div>
     </div>
 
-    <div id="game-screen" class="screen hidden" style="background: #000;">
+    <!-- SELECCIÓN DE MODO DE JUEGO -->
+    <div id="game-mode-screen" class="screen hidden">
+      <div class="card-panel">
+        <h2>Modo de Juego</h2>
+        <button id="mode-cara" style="width:100%;">⚽ Cara a Cara (90 min simulados)</button>
+        <button id="mode-ataque" style="width:100%; background: linear-gradient(135deg, #e67e22, #d35400);">🔥 Ataque Enfrentado</button>
+        <button id="back-from-gamemode" class="secondary" style="width:100%;">Volver</button>
+      </div>
+    </div>
+
+    <!-- SELECCIÓN DE RIVAL -->
+    <div id="opponent-screen" class="screen hidden">
+      <div class="card-panel">
+        <h2>Elegir Rival</h2>
+        <div id="rival-selection">
+          <button id="vs-bot" style="width:100%;">🤖 Contra la Máquina</button>
+          <button id="vs-friend" style="width:100%; background: linear-gradient(135deg, #3498db, #2980b9);">👥 Contra Amigo</button>
+          <div id="bot-options" class="hidden">
+            <label>Dificultad:</label>
+            <select id="difficulty-select">
+              <option value="easy">Fácil</option>
+              <option value="medium" selected>Medio</option>
+              <option value="hard">Difícil</option>
+            </select>
+            <button id="start-match-bot-btn">Empezar Partido</button>
+          </div>
+          <div id="friend-options" class="hidden">
+            <p style="color:#ccc;">Código de sala:</p>
+            <input type="text" id="room-code-input" placeholder="Ej. ABC123" style="text-transform:uppercase;" />
+            <button id="create-room-btn">Crear Sala</button>
+            <button id="join-room-btn">Unirse a Sala</button>
+            <p id="room-status" style="margin-top:10px; color:#ffd700;"></p>
+          </div>
+        </div>
+        <button id="back-from-opponent" class="secondary" style="margin-top:15px;">Volver</button>
+      </div>
+    </div>
+
+    <!-- PARTIDO 3D -->
+    <div id="game-screen" class="screen hidden" style="background: #000; padding:0;">
       <canvas id="gameCanvas"></canvas>
       <div class="game-ui">
-        <p>Minuto: <span id="match-minute">0</span>'</p>
-        <p>Marcador: <span id="score-home">0</span> - <span id="score-away">0</span></p>
-        <div id="action-buttons">
-          <button id="action-shoot">⚽ Chutar</button>
-          <button id="action-pass">🔄 Pasar</button>
-          <button id="action-dribble">🌀 Regate</button>
-        </div>
-        <button id="quit-match" style="background:#e74c3c;">Abandonar</button>
+        <p style="font-size:1.2rem; font-weight:bold;">Minuto <span id="match-minute">0</span>'</p>
+        <p style="font-size:1.8rem;">⚽ <span id="score-home">0</span> - <span id="score-away">0</span></p>
+      </div>
+      <div class="action-buttons">
+        <button id="action-shoot">⚽ Chutar</button>
+        <button id="action-pass">🔄 Pasar</button>
+        <button id="action-dribble">🌀 Regate</button>
+        <button id="quit-match" class="danger">Abandonar</button>
       </div>
     </div>
   </div>
 
+  <!-- Botón oculto para activar admin -->
   <button class="logo-ft" id="admin-trigger">ft</button>
 
   <script type="module">
-    // ========================= CONFIGURACIÓN FIREBASE =========================
+    // ==================== CONFIGURACIÓN DE FIREBASE ====================
     const firebaseConfig = {
       apiKey: "AIzaSyD13N4-9MjTrmlPwGP7mves0Exje4v2ACw",
       authDomain: "kahoot-8529e.firebaseapp.com",
@@ -158,8 +515,9 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
+    const storage = firebase.storage();
 
-    // ========================= ELEMENTOS DOM =========================
+    // ==================== REFERENCIAS DEL DOM ====================
     const screens = {
       login: document.getElementById('login-screen'),
       mainMenu: document.getElementById('main-menu-screen'),
@@ -173,114 +531,130 @@
 
     function showScreen(screenId) {
       Object.values(screens).forEach(s => s.classList.add('hidden'));
-      screens[screenId].classList.remove('hidden');
+      if (screens[screenId]) screens[screenId].classList.remove('hidden');
     }
 
-    // ========================= AUTENTICACIÓN =========================
-    const emailInput = document.getElementById('email');
-    const passInput = document.getElementById('password');
+    // ==================== ESTADO GLOBAL ====================
+    let currentUser = null;
+    let userData = { monedas: 0, jugadores: [], alineacion: '4-4-2', assignedSlots: {} }; // assignedSlots: posición -> id jugador
+    const POSITIONS_442 = ['GK', 'LB', 'CB1', 'CB2', 'RB', 'LM', 'CM1', 'CM2', 'RM', 'ST1', 'ST2'];
+    const POSITIONS_BY_FORMATION = {
+      '4-4-2': POSITIONS_442,
+      '4-3-3': ['GK','LB','CB1','CB2','RB','CM1','CM2','CM3','LW','ST','RW'],
+      '3-5-2': ['GK','CB1','CB2','CB3','LM','CM1','CM2','CM3','RM','ST1','ST2'],
+      '4-2-3-1': ['GK','LB','CB1','CB2','RB','CDM1','CDM2','CAM1','CAM2','CAM3','ST'],
+      '5-3-2': ['GK','LWB','CB1','CB2','CB3','RWB','CM1','CM2','CM3','ST1','ST2'],
+      '3-4-3': ['GK','CB1','CB2','CB3','LM','CM1','CM2','RM','LW','ST','RW'],
+      '4-1-4-1': ['GK','LB','CB1','CB2','RB','CDM','LM','CM1','CM2','RM','ST']
+    };
+
+    // ==================== AUTENTICACIÓN ====================
+    const loginEmail = document.getElementById('login-email');
+    const loginPass = document.getElementById('login-password');
     const loginBtn = document.getElementById('login-btn');
     const registerBtn = document.getElementById('register-btn');
     const authMsg = document.getElementById('auth-msg');
-    const loadingSpinner = document.getElementById('loading-spinner');
-
-    let currentUser = null;
-
-    // Simular retardo de 5 segundos
-    function delay(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    loginBtn.addEventListener('click', async () => {
-      const email = emailInput.value;
-      const pass = passInput.value;
-      if (!email || !pass) return;
-      try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        showLoading();
-        await delay(5000);
-        await initUserData();
-        showMainMenu();
-      } catch (e) {
-        authMsg.textContent = e.message;
-      }
-    });
-
-    registerBtn.addEventListener('click', async () => {
-      const email = emailInput.value;
-      const pass = passInput.value;
-      if (!email || !pass) return;
-      try {
-        await auth.createUserWithEmailAndPassword(email, pass);
-        showLoading();
-        await delay(5000);
-        await initUserData();
-        showMainMenu();
-      } catch (e) {
-        authMsg.textContent = e.message;
-      }
-    });
+    const loadingArea = document.getElementById('loading-area');
 
     function showLoading() {
-      loadingSpinner.classList.remove('hidden');
+      loadingArea.classList.remove('hidden');
       loginBtn.disabled = true;
       registerBtn.disabled = true;
+    }
+
+    function hideLoading() {
+      loadingArea.classList.add('hidden');
+      loginBtn.disabled = false;
+      registerBtn.disabled = false;
     }
 
     async function initUserData() {
       if (!currentUser) return;
       const userRef = db.ref(`users/${currentUser.uid}`);
-      const snapshot = await userRef.once('value');
-      if (!snapshot.exists()) {
+      const snap = await userRef.once('value');
+      if (!snap.exists()) {
         await userRef.set({
           monedas: 0,
           jugadores: [],
-          alineacion: '4-4-2'
+          alineacion: '4-4-2',
+          assignedSlots: {}
         });
+      } else {
+        // Cargar datos existentes
+        userData = snap.val();
+        if (!userData.assignedSlots) userData.assignedSlots = {};
+        if (!userData.jugadores) userData.jugadores = [];
+        if (!userData.monedas) userData.monedas = 0;
       }
     }
+
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const pass = loginPass.value.trim();
+      if (!email || !pass) return authMsg.textContent = 'Completa todos los campos.';
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        showLoading();
+        await new Promise(resolve => setTimeout(resolve, 5000)); // espera 5 segundos
+        await initUserData();
+        hideLoading();
+        showScreen('mainMenu');
+      } catch (e) {
+        authMsg.textContent = e.message;
+        hideLoading();
+      }
+    });
+
+    registerBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const pass = loginPass.value.trim();
+      if (!email || !pass) return authMsg.textContent = 'Completa todos los campos.';
+      try {
+        await auth.createUserWithEmailAndPassword(email, pass);
+        showLoading();
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        await initUserData();
+        hideLoading();
+        showScreen('mainMenu');
+      } catch (e) {
+        authMsg.textContent = e.message;
+        hideLoading();
+      }
+    });
 
     auth.onAuthStateChanged(async (user) => {
       currentUser = user;
       if (user) {
         await initUserData();
-        showMainMenu();
+        listenToUserData();
+        showScreen('mainMenu');
       } else {
         showScreen('login');
       }
     });
 
-    // ========================= DATOS USUARIO =========================
-    let userData = { monedas: 0, jugadores: [], alineacion: '4-4-2' };
-    const userRef = () => currentUser ? db.ref(`users/${currentUser.uid}`) : null;
-
+    // ==================== ESCUCHA DE DATOS EN TIEMPO REAL ====================
     function listenToUserData() {
       if (!currentUser) return;
-      userRef().on('value', snap => {
+      db.ref(`users/${currentUser.uid}`).on('value', snap => {
         if (snap.exists()) {
           userData = snap.val();
-          updateMainMenu();
+          if (!userData.assignedSlots) userData.assignedSlots = {};
+          updateMainMenuUI();
         }
       });
     }
 
-    function updateMainMenu() {
+    function updateMainMenuUI() {
       document.getElementById('monedas-display').textContent = userData.monedas || 0;
       const playBtn = document.getElementById('play-btn');
-      playBtn.disabled = !userData.jugadores || userData.jugadores.length === 0;
+      playBtn.disabled = !(userData.jugadores && userData.jugadores.length > 0);
       document.getElementById('player-count').textContent = userData.jugadores ? userData.jugadores.length : 0;
     }
 
-    function showMainMenu() {
-      listenToUserData();
-      showScreen('mainMenu');
-      updateMainMenu();
-    }
-
-    // ========================= NAVEGACIÓN PRINCIPAL =========================
+    // ==================== MENÚ PRINCIPAL ====================
     document.getElementById('lineup-btn').addEventListener('click', () => {
-      document.getElementById('formation-select').value = userData.alineacion || '4-4-2';
-      document.getElementById('player-count').textContent = userData.jugadores ? userData.jugadores.length : 0;
+      populateLineupScreen();
       showScreen('lineup');
     });
 
@@ -293,58 +667,168 @@
       showScreen('market');
     });
 
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      auth.signOut();
+    });
+
+    // ==================== PANTALLA DE ALINEACIÓN ====================
+    const formationSelect = document.getElementById('formation-select');
+    const pitchContainer = document.getElementById('pitch-container');
+    const availablePlayersDiv = document.getElementById('available-players');
+
+    function populateLineupScreen() {
+      formationSelect.value = userData.alineacion || '4-4-2';
+      renderPitch(formationSelect.value);
+      renderAvailablePlayers();
+    }
+
+    function renderPitch(formation) {
+      pitchContainer.innerHTML = '<div class="center-circle"></div>';
+      const positions = POSITIONS_BY_FORMATION[formation] || POSITIONS_442;
+      const pitchWidth = pitchContainer.clientWidth;
+      const pitchHeight = pitchContainer.clientHeight;
+
+      // Calcular posiciones aproximadas según formación
+      positions.forEach((pos, index) => {
+        const slot = document.createElement('div');
+        slot.className = 'player-slot';
+        slot.dataset.position = pos;
+        // Colocar según líneas típicas
+        let x, y;
+        if (pos === 'GK') {
+          x = 0.1;
+          y = 0.5;
+        } else if (pos.includes('CB') || pos.includes('LB') || pos.includes('RB') || pos.includes('LWB') || pos.includes('RWB')) {
+          x = 0.3;
+          y = index / (positions.length - 1) * 0.8 + 0.1;
+        } else if (pos.includes('CM') || pos.includes('CDM') || pos.includes('CAM')) {
+          x = 0.5;
+          y = index / (positions.length - 1) * 0.8 + 0.1;
+        } else if (pos.includes('LM') || pos.includes('RM') || pos.includes('LW') || pos.includes('RW')) {
+          x = 0.65;
+          y = index / (positions.length - 1) * 0.8 + 0.1;
+        } else {
+          x = 0.85;
+          y = index / (positions.length - 1) * 0.8 + 0.1;
+        }
+        slot.style.left = `${x * 100}%`;
+        slot.style.top = `${y * 100}%`;
+        slot.style.transform = 'translate(-50%, -50%)';
+
+        // Verificar si hay un jugador asignado
+        const assignedPlayerId = userData.assignedSlots?.[pos];
+        if (assignedPlayerId && userData.jugadores) {
+          const player = userData.jugadores.find(p => p.id === assignedPlayerId);
+          if (player) {
+            slot.style.backgroundImage = `url(${player.image || ''})`;
+            slot.style.backgroundColor = '#0a0f1e';
+            slot.title = player.name;
+            slot.textContent = '';
+          } else {
+            slot.classList.add('empty');
+            slot.textContent = pos;
+          }
+        } else {
+          slot.classList.add('empty');
+          slot.textContent = pos;
+        }
+
+        slot.addEventListener('click', () => {
+          // Abrir selector de jugador para esa posición
+          assignPlayerToPosition(pos, slot);
+        });
+        pitchContainer.appendChild(slot);
+      });
+    }
+
+    function renderAvailablePlayers() {
+      availablePlayersDiv.innerHTML = '';
+      if (!userData.jugadores || userData.jugadores.length === 0) {
+        availablePlayersDiv.innerHTML = '<p style="color:#e74c3c;">No tienes jugadores en tu plantilla. Ve al mercado a comprar.</p>';
+        return;
+      }
+      userData.jugadores.forEach(player => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background:#1e1f2e; border-radius:12px; padding:8px; width:80px; text-align:center; cursor:pointer;';
+        card.innerHTML = `<img src="${player.image || 'https://via.placeholder.com/80'}" style="width:100%; border-radius:8px;"/><p style="font-size:0.7rem;">${player.name}</p>`;
+        card.addEventListener('click', () => {
+          // Asignar a la primera posición vacía o pedir selección
+          alert('Haz clic en una posición del campo para asignar este jugador.');
+          // Almacenar temporalmente el jugador seleccionado
+          window._selectedPlayer = player;
+        });
+        availablePlayersDiv.appendChild(card);
+      });
+    }
+
+    function assignPlayerToPosition(position, slotElement) {
+      const player = window._selectedPlayer;
+      if (!player) {
+        alert('Primero selecciona un jugador de tu plantilla de abajo.');
+        return;
+      }
+      // Actualizar assignedSlots
+      userData.assignedSlots[position] = player.id;
+      // Guardar en Firebase
+      db.ref(`users/${currentUser.uid}/assignedSlots`).set(userData.assignedSlots);
+      slotElement.style.backgroundImage = `url(${player.image || ''})`;
+      slotElement.style.backgroundColor = '#0a0f1e';
+      slotElement.classList.remove('empty');
+      slotElement.textContent = '';
+      window._selectedPlayer = null;
+    }
+
     document.getElementById('save-formation-btn').addEventListener('click', async () => {
-      const formation = document.getElementById('formation-select').value;
-      await userRef().update({ alineacion: formation });
+      const formation = formationSelect.value;
+      await db.ref(`users/${currentUser.uid}/alineacion`).set(formation);
+      userData.alineacion = formation;
       alert('Formación guardada.');
       showScreen('mainMenu');
     });
 
     document.getElementById('back-from-lineup').addEventListener('click', () => showScreen('mainMenu'));
-    document.getElementById('back-from-market').addEventListener('click', () => showScreen('mainMenu'));
-    document.getElementById('back-from-gamemode').addEventListener('click', () => showScreen('mainMenu'));
-    document.getElementById('back-from-opponent').addEventListener('click', () => showScreen('gameMode'));
-    document.getElementById('quit-match').addEventListener('click', () => endMatch());
 
-    // ========================= MERCADO =========================
-    const marketContainer = document.getElementById('market-container');
-    function loadMarket() {
-      db.ref('market').on('value', snap => {
+    // ==================== MERCADO ====================
+    async function loadMarket() {
+      const marketRef = db.ref('market');
+      marketRef.on('value', snap => {
+        const marketContainer = document.getElementById('market-container');
         marketContainer.innerHTML = '';
         if (!snap.exists()) {
-          marketContainer.innerHTML = '<p>No hay jugadores en venta.</p>';
+          marketContainer.innerHTML = '<p style="color:#aaa;">No hay jugadores en venta.</p>';
           return;
         }
-        const marketItems = snap.val();
-        Object.entries(marketItems).forEach(([id, item]) => {
+        const items = snap.val();
+        Object.entries(items).forEach(([id, item]) => {
           const card = document.createElement('div');
           card.className = 'player-card';
           card.innerHTML = `
             <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}">
-            <p><strong>${item.name}</strong></p>
-            <p>💰 ${item.price} monedas</p>
+            <div class="name">${item.name}</div>
+            <div class="price">💰 ${item.price.toLocaleString()} monedas</div>
             <button class="buy-player" data-id="${id}" data-price="${item.price}">Comprar</button>
           `;
           card.querySelector('.buy-player').addEventListener('click', async (e) => {
-            const btn = e.target;
-            const price = parseInt(btn.dataset.price);
+            const price = parseInt(e.target.dataset.price);
             if (userData.monedas < price) return alert('Monedas insuficientes.');
-            const playerId = btn.dataset.id;
-            // Añadir al usuario y quitar del mercado
+            const playerId = e.target.dataset.id;
+            // Añadir jugador a la plantilla del usuario
+            const newJugadores = [...(userData.jugadores || []), { id: playerId, name: item.name, image: item.image }];
             const updates = {};
             updates[`users/${currentUser.uid}/monedas`] = userData.monedas - price;
-            const newJugadores = [...(userData.jugadores || []), playerId];
             updates[`users/${currentUser.uid}/jugadores`] = newJugadores;
-            updates[`market/${playerId}`] = null; // eliminar
+            updates[`market/${playerId}`] = null;
             await db.ref().update(updates);
-            alert('Jugador comprado.');
+            alert('Jugador comprado exitosamente.');
           });
           marketContainer.appendChild(card);
         });
       });
     }
 
-    // ========================= ADMIN PANEL =========================
+    document.getElementById('back-from-market').addEventListener('click', () => showScreen('mainMenu'));
+
+    // ==================== ADMIN PANEL ====================
     document.getElementById('admin-trigger').addEventListener('click', () => {
       const password = prompt('Contraseña de administrador:');
       if (password === 'Owner') {
@@ -356,21 +840,53 @@
 
     document.getElementById('close-admin').addEventListener('click', () => showScreen('mainMenu'));
 
-    document.getElementById('add-player-btn').addEventListener('click', async () => {
-      const name = document.getElementById('player-name').value;
-      const image = document.getElementById('player-image').value;
-      const price = parseInt(document.getElementById('player-price').value);
-      if (!name || !price || isNaN(price)) return alert('Rellena todos los campos.');
-      const newPlayerRef = db.ref('market').push();
-      await newPlayerRef.set({ name, image, price });
-      alert('Jugador añadido al mercado.');
-      document.getElementById('player-name').value = '';
-      document.getElementById('player-image').value = '';
-      document.getElementById('player-price').value = '';
+    // Previsualización de imagen seleccionada
+    document.getElementById('admin-player-image-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById('image-preview').src = ev.target.result;
+          document.getElementById('image-preview-container').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
     });
 
-    // ========================= SELECCIÓN DE MODO Y RIVAL =========================
-    let selectedMode = 'cara'; // 'cara' o 'ataque'
+    document.getElementById('add-player-btn').addEventListener('click', async () => {
+      const name = document.getElementById('admin-player-name').value.trim();
+      const price = parseInt(document.getElementById('admin-player-price').value);
+      const fileInput = document.getElementById('admin-player-image-file');
+      const file = fileInput.files[0];
+      if (!name || !price || isNaN(price)) return alert('Completa nombre y precio.');
+
+      const adminMsg = document.getElementById('admin-msg');
+      adminMsg.textContent = 'Subiendo...';
+
+      try {
+        let imageUrl = '';
+        if (file) {
+          const storageRef = storage.ref(`players/${Date.now()}_${file.name}`);
+          const uploadTask = await storageRef.put(file);
+          imageUrl = await uploadTask.ref.getDownloadURL();
+        } else {
+          imageUrl = 'https://via.placeholder.com/150';
+        }
+
+        const newPlayerRef = db.ref('market').push();
+        await newPlayerRef.set({ name, image: imageUrl, price });
+        adminMsg.textContent = 'Jugador añadido al mercado.';
+        document.getElementById('admin-player-name').value = '';
+        document.getElementById('admin-player-price').value = '';
+        fileInput.value = '';
+        document.getElementById('image-preview-container').style.display = 'none';
+      } catch (error) {
+        adminMsg.textContent = 'Error: ' + error.message;
+      }
+    });
+
+    // ==================== MODOS DE JUEGO Y RIVAL ====================
+    let selectedMode = 'cara';
     let isVsBot = true;
     let difficulty = 'medium';
     let roomId = null;
@@ -379,29 +895,33 @@
       selectedMode = 'cara';
       showScreen('opponent');
     });
+
     document.getElementById('mode-ataque').addEventListener('click', () => {
       selectedMode = 'ataque';
       showScreen('opponent');
     });
 
-    const vsBotBtn = document.getElementById('vs-bot');
-    const vsFriendBtn = document.getElementById('vs-friend');
-    const difficultySelect = document.getElementById('difficulty-select');
-    const roomControls = document.getElementById('room-controls');
+    document.getElementById('back-from-gamemode').addEventListener('click', () => showScreen('mainMenu'));
+
+    const botOptionsDiv = document.getElementById('bot-options');
+    const friendOptionsDiv = document.getElementById('friend-options');
     const roomStatus = document.getElementById('room-status');
 
-    vsBotBtn.addEventListener('click', () => {
+    document.getElementById('vs-bot').addEventListener('click', () => {
       isVsBot = true;
-      difficultySelect.classList.remove('hidden');
-      roomControls.classList.add('hidden');
-      document.getElementById('start-match-btn').classList.remove('hidden');
+      botOptionsDiv.classList.remove('hidden');
+      friendOptionsDiv.classList.add('hidden');
     });
 
-    vsFriendBtn.addEventListener('click', () => {
+    document.getElementById('vs-friend').addEventListener('click', () => {
       isVsBot = false;
-      difficultySelect.classList.add('hidden');
-      roomControls.classList.remove('hidden');
-      document.getElementById('start-match-btn').classList.add('hidden');
+      botOptionsDiv.classList.add('hidden');
+      friendOptionsDiv.classList.remove('hidden');
+    });
+
+    document.getElementById('start-match-bot-btn').addEventListener('click', () => {
+      difficulty = document.getElementById('difficulty-select').value;
+      startMatch(null);
     });
 
     document.getElementById('create-room-btn').addEventListener('click', async () => {
@@ -410,15 +930,13 @@
       await db.ref(`rooms/${roomId}`).set({
         host: currentUser.uid,
         guest: null,
-        gameState: null,
         status: 'waiting'
       });
       roomStatus.textContent = `Sala creada: ${code}. Esperando rival...`;
-      // Escuchar cuando se una el rival
       db.ref(`rooms/${roomId}/guest`).on('value', snap => {
         if (snap.val()) {
-          roomStatus.textContent += ' ¡Rival conectado!';
-          startMatch(code);
+          roomStatus.textContent += ' ¡Rival conectado! Comenzando...';
+          startMatch(roomId);
         }
       });
     });
@@ -426,96 +944,131 @@
     document.getElementById('join-room-btn').addEventListener('click', () => {
       const code = document.getElementById('room-code-input').value.trim().toUpperCase();
       if (!code) return;
-      roomId = code;
-      db.ref(`rooms/${roomId}`).once('value', snap => {
+      db.ref(`rooms/${code}`).once('value', snap => {
         if (!snap.exists()) return alert('Sala no encontrada.');
         const room = snap.val();
         if (room.guest) return alert('Sala llena.');
-        db.ref(`rooms/${roomId}/guest`).set(currentUser.uid);
+        db.ref(`rooms/${code}/guest`).set(currentUser.uid);
         roomStatus.textContent = `Unido a sala ${code}.`;
+        roomId = code;
         startMatch(code);
       });
     });
 
-    document.getElementById('start-match-btn').addEventListener('click', () => {
-      if (isVsBot) {
-        difficulty = difficultySelect.value;
-        startMatch(null);
-      }
-    });
+    document.getElementById('back-from-opponent').addEventListener('click', () => showScreen('gameMode'));
 
-    // ========================= PARTIDO 3D (Three.js) =========================
+    // ==================== PARTIDO 3D (THREE.JS) ====================
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    let scene, camera, renderer, ball, playerHome, playerAway, field;
-    let gameLoopInterval, matchTimerInterval;
+    let scene, camera, renderer, ball, playerHome, playerAway;
+    let matchInterval, matchTimer;
     let matchState = {
       minute: 0,
       homeGoals: 0,
       awayGoals: 0,
       finished: false,
-      lastAction: null,
-      mode: 'cara', // o 'ataque'
-      difficulty: 'medium'
+      mode: 'cara',
+      difficulty: 'medium',
+      roomId: null
     };
+
+    function startMatch(room) {
+      showScreen('game');
+      init3DScene();
+      matchState = {
+        minute: 0,
+        homeGoals: 0,
+        awayGoals: 0,
+        finished: false,
+        mode: selectedMode,
+        difficulty: isVsBot ? difficulty : 'medium',
+        roomId: room
+      };
+      updateMatchUI();
+
+      if (selectedMode === 'cara') {
+        matchInterval = setInterval(() => {
+          if (matchState.finished) return;
+          matchState.minute++;
+          if (matchState.minute > 90) {
+            endMatchDueToTime();
+            return;
+          }
+          if (isVsBot) simulateBotAction();
+          updateMatchUI();
+        }, 10000);
+      } else {
+        // Ataque enfrentado: 120 segundos para marcar máximo goles
+        let timeLeft = 120;
+        matchTimer = setInterval(() => {
+          timeLeft--;
+          if (timeLeft <= 0) {
+            clearInterval(matchTimer);
+            endMatchDueToTime();
+          }
+        }, 1000);
+      }
+
+      // Controles de acción
+      document.getElementById('action-shoot').onclick = attemptShoot;
+      document.getElementById('action-pass').onclick = attemptPass;
+      document.getElementById('action-dribble').onclick = attemptDribble;
+      document.getElementById('quit-match').onclick = () => {
+        endMatch(false);
+      };
+
+      animate();
+    }
 
     function init3DScene() {
       const canvas = document.getElementById('gameCanvas');
+      if (renderer) {
+        renderer.dispose();
+      }
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.shadowMap.enabled = true;
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x1a1a2e);
+      scene.background = new THREE.Color(0x1a2b1f);
 
       camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 15, 25);
+      camera.position.set(0, 14, 20);
       camera.lookAt(0, 0, 0);
 
-      // Iluminación
       const light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(10, 20, 10);
       light.castShadow = true;
       scene.add(light);
       scene.add(new THREE.AmbientLight(0x404040));
 
-      // Suelo verde
+      // Suelo
       const grass = new THREE.Mesh(
-        new THREE.PlaneGeometry(20, 12),
+        new THREE.PlaneGeometry(18, 10),
         new THREE.MeshStandardMaterial({ color: 0x2e8b57 })
       );
       grass.rotation.x = -Math.PI/2;
       grass.receiveShadow = true;
       scene.add(grass);
 
-      // Líneas blancas (aproximadas)
-      const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff });
-      // centro
-      const centerLine = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0.01, -6), new THREE.Vector3(0, 0.01, 6)
-      ]);
-      scene.add(new THREE.Line(centerLine, lineMat));
-      // áreas
-      // ... simplificado
-
       // Balón
-      const ballGeom = new THREE.SphereGeometry(0.3, 32, 32);
-      const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      ball = new THREE.Mesh(ballGeom, ballMat);
+      ball = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 32, 32),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
+      );
       ball.position.set(0, 0.3, 0);
       ball.castShadow = true;
       scene.add(ball);
 
       // Jugador local (azul)
-      playerHome = createPlayer(0xff4444);
+      playerHome = createPlayer(0x3a7bd5);
       playerHome.position.set(-2, 0.5, 0);
       // Jugador rival (rojo)
-      playerAway = createPlayer(0x4444ff);
+      playerAway = createPlayer(0xe74c3c);
       playerAway.position.set(2, 0.5, 0);
 
-      // Porterías
-      createGoal(-10, 0, 1.5, 0.5); // izquierda (rival)
-      createGoal(10, 0, 1.5, 0.5);  // derecha (local)
+      createGoal(-9, 0, 1.5, 0.5);
+      createGoal(9, 0, 1.5, 0.5);
     }
 
     function createPlayer(color) {
@@ -537,110 +1090,55 @@
     }
 
     function createGoal(x, y, height, depth) {
-      const postMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
-      const postLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, height, 0.1), postMat);
-      postLeft.position.set(x-0.75, height/2, 0);
-      scene.add(postLeft);
-      const postRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, height, 0.1), postMat);
-      postRight.position.set(x+0.75, height/2, 0);
-      scene.add(postRight);
-      const crossbar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.1), postMat);
-      crossbar.position.set(x, height, 0);
-      scene.add(crossbar);
+      const mat = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
+      const left = new THREE.Mesh(new THREE.BoxGeometry(0.1, height, 0.1), mat);
+      left.position.set(x-0.75, height/2, 0);
+      scene.add(left);
+      const right = new THREE.Mesh(new THREE.BoxGeometry(0.1, height, 0.1), mat);
+      right.position.set(x+0.75, height/2, 0);
+      scene.add(right);
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.1), mat);
+      bar.position.set(x, height, 0);
+      scene.add(bar);
     }
 
-    function startMatch(room) {
-      showScreen('game');
-      init3DScene();
-      matchState = {
-        minute: 0,
-        homeGoals: 0,
-        awayGoals: 0,
-        finished: false,
-        mode: selectedMode,
-        difficulty: isVsBot ? difficulty : 'medium',
-        roomId: room
-      };
-      updateGameUI();
-
-      // Si multijugador, sincronizar estado en la sala
-      if (room && !isVsBot) {
-        // Sincronizar acciones del oponente
-      }
-
-      // Cada 10 segundos = 1 minuto en modo Cara a Cara
-      if (selectedMode === 'cara') {
-        matchTimerInterval = setInterval(() => {
-          if (matchState.finished) return;
-          matchState.minute++;
-          if (matchState.minute > 90) {
-            finishMatch();
-            return;
-          }
-          // Simular acciones automáticas (bot)
-          if (isVsBot) {
-            botAction();
-          }
-          updateGameUI();
-        }, 10000);
-      } else {
-        // Ataque enfrentado: no hay temporizador, el usuario intenta marcar en un tiempo fijo (ej 120 segundos)
-        let timeLeft = 120;
-        const timer = setInterval(() => {
-          timeLeft--;
-          if (timeLeft <= 0) {
-            clearInterval(timer);
-            finishMatch();
-          }
-        }, 1000);
-      }
-
-      // Controles de acciones (chutar, pasar, regate)
-      document.getElementById('action-shoot').addEventListener('click', () => attemptShoot());
-      document.getElementById('action-pass').addEventListener('click', () => attemptPass());
-      document.getElementById('action-dribble').addEventListener('click', () => attemptDribble());
-
-      animate();
-    }
-
-    function botAction() {
-      // Simulación muy simple: probabilidad de gol rival según dificultad
-      const diffChance = { easy: 0.1, medium: 0.3, hard: 0.5 };
-      if (Math.random() < diffChance[matchState.difficulty]) {
+    function simulateBotAction() {
+      const chance = { easy: 0.1, medium: 0.3, hard: 0.5 }[matchState.difficulty];
+      if (Math.random() < chance) {
         matchState.awayGoals++;
-        showGoalEffect('rival');
+        updateMatchUI();
       }
     }
 
     function attemptShoot() {
       if (matchState.finished) return;
-      // Lanzar balón hacia portería rival (derecha)
-      const targetX = 9.5;
-      const duration = 1.5; // segundos
-      animateBall(ball.position, new THREE.Vector3(targetX, 0.5, (Math.random()-0.5)*2), () => {
-        // Gol si cruza la línea
-        if (ball.position.x > 9) {
+      const target = new THREE.Vector3(8.5, 0.5, (Math.random()-0.5)*2);
+      animateBall(target, () => {
+        if (ball.position.x > 8) {
           matchState.homeGoals++;
-          updateGameUI();
-          showGoalEffect('local');
+          updateMatchUI();
+          if (matchState.mode === 'ataque') {
+            // Respawn ball
+            ball.position.set(0, 0.3, 0);
+          }
         }
       });
     }
 
     function attemptPass() {
-      // Mover balón a un compañero (no implementado realmente)
-      alert('Pase realizado (simulado)');
+      alert('Pase realizado (funcionalidad en desarrollo)');
     }
 
     function attemptDribble() {
-      alert('Regate realizado (simulado)');
+      alert('Regate realizado (funcionalidad en desarrollo)');
     }
 
-    function animateBall(from, to, callback) {
-      const start = performance.now();
+    function animateBall(target, callback) {
+      const startPos = ball.position.clone();
+      const startTime = performance.now();
       function step(now) {
-        const progress = Math.min((now - start) / 1000 / 1.5, 1);
-        ball.position.lerpVectors(from, to, progress);
+        const progress = Math.min((now - startTime) / 1500, 1);
+        ball.position.lerpVectors(startPos, target, progress);
         if (progress < 1) {
           requestAnimationFrame(step);
         } else if (callback) callback();
@@ -648,49 +1146,53 @@
       requestAnimationFrame(step);
     }
 
-    function showGoalEffect(who) {
-      // Simple destello
-    }
-
-    function finishMatch() {
-      matchState.finished = true;
-      clearInterval(matchTimerInterval);
-      // Calcular recompensas y actualizar Firebase
-      let reward = 0;
-      if (matchState.homeGoals > matchState.awayGoals) {
-        reward = matchState.homeGoals - matchState.awayGoals >= 5 ? 1000000 : 100000;
-      } else if (matchState.homeGoals < matchState.awayGoals) {
-        reward = 50000;
-      } else {
-        reward = 0; // empate sin monedas (podrías decidir)
-      }
-      if (reward > 0) {
-        userRef().update({ monedas: (userData.monedas || 0) + reward });
-      }
-      alert(`Partido terminado. Has ganado ${reward} monedas.`);
-      endMatch();
-    }
-
-    function endMatch() {
-      clearInterval(matchTimerInterval);
-      if (renderer) renderer.dispose();
-      document.getElementById('gameCanvas').remove();
-      const newCanvas = document.createElement('canvas');
-      newCanvas.id = 'gameCanvas';
-      document.getElementById('game-screen').prepend(newCanvas);
-      showScreen('mainMenu');
-    }
-
-    function updateGameUI() {
+    function updateMatchUI() {
       document.getElementById('match-minute').textContent = matchState.minute;
       document.getElementById('score-home').textContent = matchState.homeGoals;
       document.getElementById('score-away').textContent = matchState.awayGoals;
     }
 
+    function endMatchDueToTime() {
+      matchState.finished = true;
+      clearInterval(matchInterval);
+      clearInterval(matchTimer);
+      calculateRewardAndFinish();
+    }
+
+    function endMatch(quit = true) {
+      matchState.finished = true;
+      clearInterval(matchInterval);
+      clearInterval(matchTimer);
+      if (!quit) calculateRewardAndFinish();
+      else {
+        showScreen('mainMenu');
+      }
+    }
+
+    function calculateRewardAndFinish() {
+      let reward = 0;
+      if (matchState.homeGoals > matchState.awayGoals) {
+        reward = (matchState.homeGoals - matchState.awayGoals) >= 5 ? 1000000 : 100000;
+      } else if (matchState.homeGoals < matchState.awayGoals) {
+        reward = 50000;
+      }
+      if (reward > 0 && currentUser) {
+        db.ref(`users/${currentUser.uid}/monedas`).set((userData.monedas || 0) + reward);
+      }
+      alert(`Partido terminado. Has ganado ${reward.toLocaleString()} monedas.`);
+      if (renderer) renderer.dispose();
+      const oldCanvas = document.getElementById('gameCanvas');
+      if (oldCanvas) {
+        const newCanvas = document.createElement('canvas');
+        newCanvas.id = 'gameCanvas';
+        oldCanvas.parentNode.replaceChild(newCanvas, oldCanvas);
+      }
+      showScreen('mainMenu');
+    }
+
     function animate() {
       if (!renderer || matchState.finished) return;
       requestAnimationFrame(animate);
-      // Rotar jugadores o mover balón mínimamente
       renderer.render(scene, camera);
     }
 
@@ -701,6 +1203,9 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
       }
     });
+
+    // ==================== INICIALIZACIÓN FINAL ====================
+    window._selectedPlayer = null;
 
   </script>
 </body>
