@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FIFA Mobile Web - Ultimate Edition</title>
+  <title>FIFA Mobile Web - Edición Definitiva</title>
   <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-  <!-- Three.js import map -->
+  <!-- Three.js -->
   <script type="importmap">
     {
       "imports": {
@@ -245,7 +245,7 @@
       background: linear-gradient(0deg, #2e8b57 0%, #3cb371 50%, #2e8b57 100%);
       border-radius: 20px;
       position: relative;
-      margin: 15px 0;
+      margin: 15px auto;
       box-shadow: 0 15px 25px rgba(0,0,0,0.5);
       border: 3px solid rgba(255,255,255,0.2);
       overflow: hidden;
@@ -300,8 +300,28 @@
     }
 
     .player-slot:hover {
-      transform: scale(1.1);
+      transform: scale(1.1) translate(-50%, -50%);
       z-index: 10;
+    }
+
+    .player-slot .remove-btn {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #e74c3c;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      line-height: 18px;
+      text-align: center;
+      color: white;
+      display: none;
+      cursor: pointer;
+    }
+
+    .player-slot:hover .remove-btn {
+      display: block;
     }
 
     .formation-selector {
@@ -347,6 +367,16 @@
       .card-panel { padding: 20px 15px; }
       button { padding: 12px 20px; font-size: 0.9rem; }
       .player-slot { width: 35px; height: 35px; font-size: 0.6rem; }
+    }
+
+    /* ============ ADMIN ============ */
+    #image-preview-container {
+      max-width: 200px;
+      margin: 10px auto;
+    }
+    #image-preview {
+      width: 100%;
+      border-radius: 12px;
     }
   </style>
 </head>
@@ -404,15 +434,16 @@
         <!-- Campo de fútbol visual -->
         <div class="lineup-pitch" id="pitch-container">
           <div class="center-circle"></div>
-          <!-- Los slots se generarán dinámicamente -->
+          <!-- Slots generados dinámicamente -->
         </div>
         <p style="color:#aaa;">Jugadores en plantilla: <span id="player-count">0</span></p>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
           <button id="save-formation-btn">Guardar formación</button>
           <button id="back-from-lineup" class="secondary">Volver</button>
         </div>
-        <!-- Lista de jugadores disponibles para arrastrar a posiciones (simplificado: click para asignar) -->
-        <div id="available-players" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px; justify-content:center;"></div>
+        <!-- Lista de jugadores disponibles -->
+        <h3 style="margin-top:15px;">Jugadores disponibles para asignar</h3>
+        <div id="available-players" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
       </div>
     </div>
 
@@ -432,8 +463,8 @@
         <input type="text" id="admin-player-name" placeholder="Nombre del jugador" />
         <label style="display:block; margin:10px 0; color:#ccc;">📷 Imagen del jugador:</label>
         <input type="file" id="admin-player-image-file" accept="image/*" style="background:transparent; border:none; padding:5px;" />
-        <div id="image-preview-container" style="margin:10px 0; max-width:200px; display:none;">
-          <img id="image-preview" src="" alt="Previsualización" style="width:100%; border-radius:12px;" />
+        <div id="image-preview-container" style="display:none;">
+          <img id="image-preview" src="" alt="Previsualización" />
         </div>
         <input type="number" id="admin-player-price" placeholder="Precio en monedas" />
         <button id="add-player-btn">Añadir al mercado</button>
@@ -536,10 +567,9 @@
 
     // ==================== ESTADO GLOBAL ====================
     let currentUser = null;
-    let userData = { monedas: 0, jugadores: [], alineacion: '4-4-2', assignedSlots: {} }; // assignedSlots: posición -> id jugador
-    const POSITIONS_442 = ['GK', 'LB', 'CB1', 'CB2', 'RB', 'LM', 'CM1', 'CM2', 'RM', 'ST1', 'ST2'];
+    let userData = { monedas: 0, jugadores: [], alineacion: '4-4-2', assignedSlots: {} };
     const POSITIONS_BY_FORMATION = {
-      '4-4-2': POSITIONS_442,
+      '4-4-2': ['GK','LB','CB1','CB2','RB','LM','CM1','CM2','RM','ST1','ST2'],
       '4-3-3': ['GK','LB','CB1','CB2','RB','CM1','CM2','CM3','LW','ST','RW'],
       '3-5-2': ['GK','CB1','CB2','CB3','LM','CM1','CM2','CM3','RM','ST1','ST2'],
       '4-2-3-1': ['GK','LB','CB1','CB2','RB','CDM1','CDM2','CAM1','CAM2','CAM3','ST'],
@@ -580,7 +610,6 @@
           assignedSlots: {}
         });
       } else {
-        // Cargar datos existentes
         userData = snap.val();
         if (!userData.assignedSlots) userData.assignedSlots = {};
         if (!userData.jugadores) userData.jugadores = [];
@@ -595,7 +624,7 @@
       try {
         await auth.signInWithEmailAndPassword(email, pass);
         showLoading();
-        await new Promise(resolve => setTimeout(resolve, 5000)); // espera 5 segundos
+        await new Promise(resolve => setTimeout(resolve, 5000)); // 5 segundos de espera
         await initUserData();
         hideLoading();
         showScreen('mainMenu');
@@ -646,7 +675,7 @@
     }
 
     function updateMainMenuUI() {
-      document.getElementById('monedas-display').textContent = userData.monedas || 0;
+      document.getElementById('monedas-display').textContent = (userData.monedas || 0).toLocaleString();
       const playBtn = document.getElementById('play-btn');
       playBtn.disabled = !(userData.jugadores && userData.jugadores.length > 0);
       document.getElementById('player-count').textContent = userData.jugadores ? userData.jugadores.length : 0;
@@ -684,38 +713,44 @@
 
     function renderPitch(formation) {
       pitchContainer.innerHTML = '<div class="center-circle"></div>';
-      const positions = POSITIONS_BY_FORMATION[formation] || POSITIONS_442;
+      const positions = POSITIONS_BY_FORMATION[formation] || POSITIONS_BY_FORMATION['4-4-2'];
       const pitchWidth = pitchContainer.clientWidth;
       const pitchHeight = pitchContainer.clientHeight;
 
-      // Calcular posiciones aproximadas según formación
       positions.forEach((pos, index) => {
         const slot = document.createElement('div');
         slot.className = 'player-slot';
         slot.dataset.position = pos;
-        // Colocar según líneas típicas
         let x, y;
         if (pos === 'GK') {
-          x = 0.1;
-          y = 0.5;
+          x = 0.12; y = 0.5;
         } else if (pos.includes('CB') || pos.includes('LB') || pos.includes('RB') || pos.includes('LWB') || pos.includes('RWB')) {
           x = 0.3;
-          y = index / (positions.length - 1) * 0.8 + 0.1;
+          y = (index / (positions.length - 1)) * 0.75 + 0.125;
         } else if (pos.includes('CM') || pos.includes('CDM') || pos.includes('CAM')) {
-          x = 0.5;
-          y = index / (positions.length - 1) * 0.8 + 0.1;
+          x = 0.55;
+          y = (index / (positions.length - 1)) * 0.75 + 0.125;
         } else if (pos.includes('LM') || pos.includes('RM') || pos.includes('LW') || pos.includes('RW')) {
-          x = 0.65;
-          y = index / (positions.length - 1) * 0.8 + 0.1;
+          x = 0.7;
+          y = (index / (positions.length - 1)) * 0.75 + 0.125;
         } else {
           x = 0.85;
-          y = index / (positions.length - 1) * 0.8 + 0.1;
+          y = (index / (positions.length - 1)) * 0.75 + 0.125;
         }
         slot.style.left = `${x * 100}%`;
         slot.style.top = `${y * 100}%`;
         slot.style.transform = 'translate(-50%, -50%)';
 
-        // Verificar si hay un jugador asignado
+        // Crear botón de eliminar
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'remove-btn';
+        removeBtn.textContent = '✕';
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removePlayerFromSlot(pos);
+        });
+        slot.appendChild(removeBtn);
+
         const assignedPlayerId = userData.assignedSlots?.[pos];
         if (assignedPlayerId && userData.jugadores) {
           const player = userData.jugadores.find(p => p.id === assignedPlayerId);
@@ -733,9 +768,9 @@
           slot.textContent = pos;
         }
 
-        slot.addEventListener('click', () => {
-          // Abrir selector de jugador para esa posición
-          assignPlayerToPosition(pos, slot);
+        slot.addEventListener('click', (e) => {
+          if (e.target === removeBtn) return;
+          assignPlayerToPosition(pos);
         });
         pitchContainer.appendChild(slot);
       });
@@ -744,39 +779,53 @@
     function renderAvailablePlayers() {
       availablePlayersDiv.innerHTML = '';
       if (!userData.jugadores || userData.jugadores.length === 0) {
-        availablePlayersDiv.innerHTML = '<p style="color:#e74c3c;">No tienes jugadores en tu plantilla. Ve al mercado a comprar.</p>';
+        availablePlayersDiv.innerHTML = '<p style="color:#e74c3c;">No tienes jugadores. Ve al mercado a comprar.</p>';
         return;
       }
       userData.jugadores.forEach(player => {
         const card = document.createElement('div');
-        card.style.cssText = 'background:#1e1f2e; border-radius:12px; padding:8px; width:80px; text-align:center; cursor:pointer;';
-        card.innerHTML = `<img src="${player.image || 'https://via.placeholder.com/80'}" style="width:100%; border-radius:8px;"/><p style="font-size:0.7rem;">${player.name}</p>`;
+        card.style.cssText = 'background:#1e1f2e; border-radius:12px; padding:8px; width:100px; text-align:center; cursor:pointer;';
+        card.innerHTML = `<img src="${player.image || 'https://via.placeholder.com/100'}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px;"/><p style="font-size:0.7rem; margin-top:4px;">${player.name}</p>`;
         card.addEventListener('click', () => {
-          // Asignar a la primera posición vacía o pedir selección
-          alert('Haz clic en una posición del campo para asignar este jugador.');
-          // Almacenar temporalmente el jugador seleccionado
+          // Seleccionar jugador para asignar
           window._selectedPlayer = player;
+          alert(`Jugador ${player.name} seleccionado. Ahora haz clic en una posición del campo.`);
         });
         availablePlayersDiv.appendChild(card);
       });
     }
 
-    function assignPlayerToPosition(position, slotElement) {
+    function assignPlayerToPosition(position) {
       const player = window._selectedPlayer;
       if (!player) {
-        alert('Primero selecciona un jugador de tu plantilla de abajo.');
+        alert('Primero selecciona un jugador de la lista inferior.');
         return;
       }
-      // Actualizar assignedSlots
+      // Verificar que el jugador no esté ya asignado en otra posición
+      for (let [pos, id] of Object.entries(userData.assignedSlots || {})) {
+        if (id === player.id && pos !== position) {
+          alert('Ese jugador ya está asignado a otra posición. Quítalo primero.');
+          return;
+        }
+      }
       userData.assignedSlots[position] = player.id;
-      // Guardar en Firebase
       db.ref(`users/${currentUser.uid}/assignedSlots`).set(userData.assignedSlots);
-      slotElement.style.backgroundImage = `url(${player.image || ''})`;
-      slotElement.style.backgroundColor = '#0a0f1e';
-      slotElement.classList.remove('empty');
-      slotElement.textContent = '';
       window._selectedPlayer = null;
+      renderPitch(formationSelect.value);
+      renderAvailablePlayers();
     }
+
+    function removePlayerFromSlot(position) {
+      if (!userData.assignedSlots) return;
+      delete userData.assignedSlots[position];
+      db.ref(`users/${currentUser.uid}/assignedSlots`).set(userData.assignedSlots);
+      renderPitch(formationSelect.value);
+      renderAvailablePlayers();
+    }
+
+    formationSelect.addEventListener('change', () => {
+      renderPitch(formationSelect.value);
+    });
 
     document.getElementById('save-formation-btn').addEventListener('click', async () => {
       const formation = formationSelect.value;
@@ -789,9 +838,9 @@
     document.getElementById('back-from-lineup').addEventListener('click', () => showScreen('mainMenu'));
 
     // ==================== MERCADO ====================
-    async function loadMarket() {
-      const marketRef = db.ref('market');
-      marketRef.on('value', snap => {
+    function loadMarket() {
+      db.ref('market').off(); // Limpiar listener previo
+      db.ref('market').on('value', snap => {
         const marketContainer = document.getElementById('market-container');
         marketContainer.innerHTML = '';
         if (!snap.exists()) {
@@ -808,18 +857,27 @@
             <div class="price">💰 ${item.price.toLocaleString()} monedas</div>
             <button class="buy-player" data-id="${id}" data-price="${item.price}">Comprar</button>
           `;
-          card.querySelector('.buy-player').addEventListener('click', async (e) => {
+          const buyBtn = card.querySelector('.buy-player');
+          buyBtn.addEventListener('click', async (e) => {
             const price = parseInt(e.target.dataset.price);
-            if (userData.monedas < price) return alert('Monedas insuficientes.');
+            if (userData.monedas < price) {
+              alert('Monedas insuficientes.');
+              return;
+            }
+            if (!confirm(`¿Comprar a ${item.name} por ${price.toLocaleString()} monedas?`)) return;
             const playerId = e.target.dataset.id;
-            // Añadir jugador a la plantilla del usuario
+            // Agregar jugador a la plantilla del usuario
             const newJugadores = [...(userData.jugadores || []), { id: playerId, name: item.name, image: item.image }];
             const updates = {};
             updates[`users/${currentUser.uid}/monedas`] = userData.monedas - price;
             updates[`users/${currentUser.uid}/jugadores`] = newJugadores;
             updates[`market/${playerId}`] = null;
-            await db.ref().update(updates);
-            alert('Jugador comprado exitosamente.');
+            try {
+              await db.ref().update(updates);
+              alert('Jugador comprado exitosamente.');
+            } catch (error) {
+              alert('Error al comprar: ' + error.message);
+            }
           });
           marketContainer.appendChild(card);
         });
@@ -840,7 +898,6 @@
 
     document.getElementById('close-admin').addEventListener('click', () => showScreen('mainMenu'));
 
-    // Previsualización de imagen seleccionada
     document.getElementById('admin-player-image-file').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -858,11 +915,12 @@
       const price = parseInt(document.getElementById('admin-player-price').value);
       const fileInput = document.getElementById('admin-player-image-file');
       const file = fileInput.files[0];
-      if (!name || !price || isNaN(price)) return alert('Completa nombre y precio.');
-
       const adminMsg = document.getElementById('admin-msg');
-      adminMsg.textContent = 'Subiendo...';
 
+      if (!name) return adminMsg.textContent = 'Introduce un nombre.';
+      if (!price || isNaN(price) || price <= 0) return adminMsg.textContent = 'Precio inválido.';
+
+      adminMsg.textContent = 'Subiendo imagen...';
       try {
         let imageUrl = '';
         if (file) {
@@ -870,12 +928,12 @@
           const uploadTask = await storageRef.put(file);
           imageUrl = await uploadTask.ref.getDownloadURL();
         } else {
-          imageUrl = 'https://via.placeholder.com/150';
+          imageUrl = 'https://via.placeholder.com/150'; // Imagen por defecto
         }
 
         const newPlayerRef = db.ref('market').push();
         await newPlayerRef.set({ name, image: imageUrl, price });
-        adminMsg.textContent = 'Jugador añadido al mercado.';
+        adminMsg.textContent = 'Jugador añadido al mercado correctamente.';
         document.getElementById('admin-player-name').value = '';
         document.getElementById('admin-player-price').value = '';
         fileInput.value = '';
@@ -997,7 +1055,7 @@
           }
           if (isVsBot) simulateBotAction();
           updateMatchUI();
-        }, 10000);
+        }, 10000); // Cada 10 segundos reales = 1 minuto
       } else {
         // Ataque enfrentado: 120 segundos para marcar máximo goles
         let timeLeft = 120;
@@ -1010,13 +1068,10 @@
         }, 1000);
       }
 
-      // Controles de acción
       document.getElementById('action-shoot').onclick = attemptShoot;
       document.getElementById('action-pass').onclick = attemptPass;
       document.getElementById('action-dribble').onclick = attemptDribble;
-      document.getElementById('quit-match').onclick = () => {
-        endMatch(false);
-      };
+      document.getElementById('quit-match').onclick = () => endMatch(false);
 
       animate();
     }
@@ -1118,7 +1173,6 @@
           matchState.homeGoals++;
           updateMatchUI();
           if (matchState.mode === 'ataque') {
-            // Respawn ball
             ball.position.set(0, 0.3, 0);
           }
         }
@@ -1206,7 +1260,10 @@
 
     // ==================== INICIALIZACIÓN FINAL ====================
     window._selectedPlayer = null;
-
+    // Listener para cerrar sesión si se cierra la pestaña (no necesario, pero decorativo)
+    window.addEventListener('beforeunload', () => {
+      if (auth.currentUser) auth.signOut();
+    });
   </script>
 </body>
 </html>
