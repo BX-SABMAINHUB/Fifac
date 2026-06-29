@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FIFA Mobile Web - Edición Definitiva</title>
+  <title>FIFA Mobile Web - Definitiva Corregida</title>
   <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -431,17 +431,14 @@
             <option value="4-1-4-1">4-1-4-1</option>
           </select>
         </div>
-        <!-- Campo de fútbol visual -->
         <div class="lineup-pitch" id="pitch-container">
           <div class="center-circle"></div>
-          <!-- Slots generados dinámicamente -->
         </div>
         <p style="color:#aaa;">Jugadores en plantilla: <span id="player-count">0</span></p>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
           <button id="save-formation-btn">Guardar formación</button>
           <button id="back-from-lineup" class="secondary">Volver</button>
         </div>
-        <!-- Lista de jugadores disponibles -->
         <h3 style="margin-top:15px;">Jugadores disponibles para asignar</h3>
         <div id="available-players" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div>
       </div>
@@ -461,7 +458,7 @@
       <div class="card-panel">
         <h2>🔧 Panel Administrador</h2>
         <input type="text" id="admin-player-name" placeholder="Nombre del jugador" />
-        <label style="display:block; margin:10px 0; color:#ccc;">📷 Imagen del jugador:</label>
+        <label style="display:block; margin:10px 0; color:#ccc;">📷 Imagen del jugador (desde dispositivo):</label>
         <input type="file" id="admin-player-image-file" accept="image/*" style="background:transparent; border:none; padding:5px;" />
         <div id="image-preview-container" style="display:none;">
           <img id="image-preview" src="" alt="Previsualización" />
@@ -527,7 +524,6 @@
     </div>
   </div>
 
-  <!-- Botón oculto para activar admin -->
   <button class="logo-ft" id="admin-trigger">ft</button>
 
   <script type="module">
@@ -624,7 +620,7 @@
       try {
         await auth.signInWithEmailAndPassword(email, pass);
         showLoading();
-        await new Promise(resolve => setTimeout(resolve, 5000)); // 5 segundos de espera
+        await new Promise(resolve => setTimeout(resolve, 5000));
         await initUserData();
         hideLoading();
         showScreen('mainMenu');
@@ -714,8 +710,6 @@
     function renderPitch(formation) {
       pitchContainer.innerHTML = '<div class="center-circle"></div>';
       const positions = POSITIONS_BY_FORMATION[formation] || POSITIONS_BY_FORMATION['4-4-2'];
-      const pitchWidth = pitchContainer.clientWidth;
-      const pitchHeight = pitchContainer.clientHeight;
 
       positions.forEach((pos, index) => {
         const slot = document.createElement('div');
@@ -741,7 +735,6 @@
         slot.style.top = `${y * 100}%`;
         slot.style.transform = 'translate(-50%, -50%)';
 
-        // Crear botón de eliminar
         const removeBtn = document.createElement('span');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = '✕';
@@ -787,9 +780,8 @@
         card.style.cssText = 'background:#1e1f2e; border-radius:12px; padding:8px; width:100px; text-align:center; cursor:pointer;';
         card.innerHTML = `<img src="${player.image || 'https://via.placeholder.com/100'}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px;"/><p style="font-size:0.7rem; margin-top:4px;">${player.name}</p>`;
         card.addEventListener('click', () => {
-          // Seleccionar jugador para asignar
           window._selectedPlayer = player;
-          alert(`Jugador ${player.name} seleccionado. Ahora haz clic en una posición del campo.`);
+          alert(`Jugador ${player.name} seleccionado. Haz clic en una posición del campo.`);
         });
         availablePlayersDiv.appendChild(card);
       });
@@ -801,10 +793,9 @@
         alert('Primero selecciona un jugador de la lista inferior.');
         return;
       }
-      // Verificar que el jugador no esté ya asignado en otra posición
       for (let [pos, id] of Object.entries(userData.assignedSlots || {})) {
         if (id === player.id && pos !== position) {
-          alert('Ese jugador ya está asignado a otra posición. Quítalo primero.');
+          alert('Ese jugador ya está asignado a otra posición.');
           return;
         }
       }
@@ -839,7 +830,7 @@
 
     // ==================== MERCADO ====================
     function loadMarket() {
-      db.ref('market').off(); // Limpiar listener previo
+      db.ref('market').off();
       db.ref('market').on('value', snap => {
         const marketContainer = document.getElementById('market-container');
         marketContainer.innerHTML = '';
@@ -866,7 +857,6 @@
             }
             if (!confirm(`¿Comprar a ${item.name} por ${price.toLocaleString()} monedas?`)) return;
             const playerId = e.target.dataset.id;
-            // Agregar jugador a la plantilla del usuario
             const newJugadores = [...(userData.jugadores || []), { id: playerId, name: item.name, image: item.image }];
             const updates = {};
             updates[`users/${currentUser.uid}/monedas`] = userData.monedas - price;
@@ -886,7 +876,7 @@
 
     document.getElementById('back-from-market').addEventListener('click', () => showScreen('mainMenu'));
 
-    // ==================== ADMIN PANEL ====================
+    // ==================== ADMIN PANEL (MEJORADO) ====================
     document.getElementById('admin-trigger').addEventListener('click', () => {
       const password = prompt('Contraseña de administrador:');
       if (password === 'Owner') {
@@ -898,48 +888,81 @@
 
     document.getElementById('close-admin').addEventListener('click', () => showScreen('mainMenu'));
 
-    document.getElementById('admin-player-image-file').addEventListener('change', (e) => {
+    // Previsualización de imagen
+    const imageFileInput = document.getElementById('admin-player-image-file');
+    const imagePreview = document.getElementById('image-preview');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+
+    imageFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          document.getElementById('image-preview').src = ev.target.result;
-          document.getElementById('image-preview-container').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+      if (!file) {
+        imagePreviewContainer.style.display = 'none';
+        return;
       }
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona un archivo de imagen (PNG, JPG, GIF).');
+        imageFileInput.value = '';
+        imagePreviewContainer.style.display = 'none';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        imagePreview.src = ev.target.result;
+        imagePreviewContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
     });
 
     document.getElementById('add-player-btn').addEventListener('click', async () => {
       const name = document.getElementById('admin-player-name').value.trim();
       const price = parseInt(document.getElementById('admin-player-price').value);
-      const fileInput = document.getElementById('admin-player-image-file');
-      const file = fileInput.files[0];
+      const file = imageFileInput.files[0];
       const adminMsg = document.getElementById('admin-msg');
+      adminMsg.style.color = '#ffd700';
+      adminMsg.textContent = '';
 
-      if (!name) return adminMsg.textContent = 'Introduce un nombre.';
-      if (!price || isNaN(price) || price <= 0) return adminMsg.textContent = 'Precio inválido.';
+      if (!name) {
+        adminMsg.textContent = '❌ Introduce un nombre.';
+        adminMsg.style.color = '#e74c3c';
+        return;
+      }
+      if (!price || isNaN(price) || price <= 0) {
+        adminMsg.textContent = '❌ Precio inválido (debe ser un número positivo).';
+        adminMsg.style.color = '#e74c3c';
+        return;
+      }
 
-      adminMsg.textContent = 'Subiendo imagen...';
+      adminMsg.textContent = '⏳ Subiendo imagen y guardando...';
       try {
         let imageUrl = '';
         if (file) {
+          // Verificar tamaño máximo (opcional, 5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            adminMsg.textContent = '❌ La imagen es demasiado grande (máx 5MB).';
+            adminMsg.style.color = '#e74c3c';
+            return;
+          }
           const storageRef = storage.ref(`players/${Date.now()}_${file.name}`);
           const uploadTask = await storageRef.put(file);
           imageUrl = await uploadTask.ref.getDownloadURL();
         } else {
-          imageUrl = 'https://via.placeholder.com/150'; // Imagen por defecto
+          // Imagen por defecto si no se selecciona ninguna
+          imageUrl = 'https://via.placeholder.com/150';
         }
 
         const newPlayerRef = db.ref('market').push();
         await newPlayerRef.set({ name, image: imageUrl, price });
-        adminMsg.textContent = 'Jugador añadido al mercado correctamente.';
+        adminMsg.textContent = '✅ Jugador añadido al mercado con éxito.';
+        adminMsg.style.color = '#2ecc71';
+        // Limpiar formulario
         document.getElementById('admin-player-name').value = '';
         document.getElementById('admin-player-price').value = '';
-        fileInput.value = '';
-        document.getElementById('image-preview-container').style.display = 'none';
+        imageFileInput.value = '';
+        imagePreviewContainer.style.display = 'none';
       } catch (error) {
-        adminMsg.textContent = 'Error: ' + error.message;
+        console.error('Error al añadir jugador:', error);
+        adminMsg.textContent = '❌ Error: ' + error.message;
+        adminMsg.style.color = '#e74c3c';
       }
     });
 
@@ -1055,9 +1078,8 @@
           }
           if (isVsBot) simulateBotAction();
           updateMatchUI();
-        }, 10000); // Cada 10 segundos reales = 1 minuto
+        }, 10000);
       } else {
-        // Ataque enfrentado: 120 segundos para marcar máximo goles
         let timeLeft = 120;
         matchTimer = setInterval(() => {
           timeLeft--;
@@ -1078,66 +1100,42 @@
 
     function init3DScene() {
       const canvas = document.getElementById('gameCanvas');
-      if (renderer) {
-        renderer.dispose();
-      }
+      if (renderer) renderer.dispose();
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.shadowMap.enabled = true;
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x1a2b1f);
-
       camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
       camera.position.set(0, 14, 20);
       camera.lookAt(0, 0, 0);
-
       const light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(10, 20, 10);
       light.castShadow = true;
       scene.add(light);
       scene.add(new THREE.AmbientLight(0x404040));
-
-      // Suelo
-      const grass = new THREE.Mesh(
-        new THREE.PlaneGeometry(18, 10),
-        new THREE.MeshStandardMaterial({ color: 0x2e8b57 })
-      );
+      const grass = new THREE.Mesh(new THREE.PlaneGeometry(18, 10), new THREE.MeshStandardMaterial({ color: 0x2e8b57 }));
       grass.rotation.x = -Math.PI/2;
       grass.receiveShadow = true;
       scene.add(grass);
-
-      // Balón
-      ball = new THREE.Mesh(
-        new THREE.SphereGeometry(0.3, 32, 32),
-        new THREE.MeshStandardMaterial({ color: 0xffffff })
-      );
+      ball = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 32), new THREE.MeshStandardMaterial({ color: 0xffffff }));
       ball.position.set(0, 0.3, 0);
       ball.castShadow = true;
       scene.add(ball);
-
-      // Jugador local (azul)
       playerHome = createPlayer(0x3a7bd5);
       playerHome.position.set(-2, 0.5, 0);
-      // Jugador rival (rojo)
       playerAway = createPlayer(0xe74c3c);
       playerAway.position.set(2, 0.5, 0);
-
       createGoal(-9, 0, 1.5, 0.5);
       createGoal(9, 0, 1.5, 0.5);
     }
 
     function createPlayer(color) {
       const group = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.3, 0.3, 1, 8),
-        new THREE.MeshStandardMaterial({ color })
-      );
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1, 8), new THREE.MeshStandardMaterial({ color }));
       body.position.y = 0.5;
       group.add(body);
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.25, 8, 8),
-        new THREE.MeshStandardMaterial({ color: 0xffdbac })
-      );
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
       head.position.y = 1.1;
       group.add(head);
       scene.add(group);
@@ -1172,19 +1170,17 @@
         if (ball.position.x > 8) {
           matchState.homeGoals++;
           updateMatchUI();
-          if (matchState.mode === 'ataque') {
-            ball.position.set(0, 0.3, 0);
-          }
+          if (matchState.mode === 'ataque') ball.position.set(0, 0.3, 0);
         }
       });
     }
 
     function attemptPass() {
-      alert('Pase realizado (funcionalidad en desarrollo)');
+      alert('Pase realizado (simulado)');
     }
 
     function attemptDribble() {
-      alert('Regate realizado (funcionalidad en desarrollo)');
+      alert('Regate realizado (simulado)');
     }
 
     function animateBall(target, callback) {
@@ -1193,9 +1189,8 @@
       function step(now) {
         const progress = Math.min((now - startTime) / 1500, 1);
         ball.position.lerpVectors(startPos, target, progress);
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        } else if (callback) callback();
+        if (progress < 1) requestAnimationFrame(step);
+        else if (callback) callback();
       }
       requestAnimationFrame(step);
     }
@@ -1218,9 +1213,7 @@
       clearInterval(matchInterval);
       clearInterval(matchTimer);
       if (!quit) calculateRewardAndFinish();
-      else {
-        showScreen('mainMenu');
-      }
+      else showScreen('mainMenu');
     }
 
     function calculateRewardAndFinish() {
@@ -1258,12 +1251,7 @@
       }
     });
 
-    // ==================== INICIALIZACIÓN FINAL ====================
     window._selectedPlayer = null;
-    // Listener para cerrar sesión si se cierra la pestaña (no necesario, pero decorativo)
-    window.addEventListener('beforeunload', () => {
-      if (auth.currentUser) auth.signOut();
-    });
   </script>
 </body>
 </html>
