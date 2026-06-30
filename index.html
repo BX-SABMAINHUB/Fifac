@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FIFA Mobile Web - Sin Storage</title>
+  <title>FIFA Mobile Web - Completo</title>
   <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -38,24 +38,30 @@
     @keyframes spin { to { transform:rotate(360deg); } }
     .logo-ft { position:fixed; bottom:15px; right:15px; font-size:12px; color:rgba(255,255,255,0.15); background:transparent; border:none; cursor:pointer; z-index:9999; padding:5px; }
     .logo-ft:hover { color:rgba(255,255,255,0.5); }
-    .market-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:15px; width:100%; max-height:65vh; overflow-y:auto; padding:10px 5px; }
-    .player-card { background:linear-gradient(145deg, #2a2d3e, #1e1f2e); border-radius:20px; padding:12px; text-align:center; border:1px solid rgba(255,215,0,0.15); }
-    .player-card:hover { transform:translateY(-4px); }
-    .player-card img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:14px; margin-bottom:8px; background:#0f1018; }
-    .player-card .name { font-weight:600; font-size:0.9rem; color:#ffd700; margin-bottom:4px; }
-    .player-card .price { font-size:0.9rem; color:#2ecc71; font-weight:bold; margin-bottom:10px; }
+    .logo-p { position:fixed; bottom:15px; left:15px; font-size:12px; color:rgba(255,255,255,0.15); background:transparent; border:none; cursor:pointer; z-index:9999; padding:5px; }
+    .logo-p:hover { color:rgba(255,255,255,0.5); }
+    .user-id-badge { position:fixed; top:15px; right:15px; background:rgba(0,0,0,0.5); backdrop-filter:blur(5px); padding:8px 12px; border-radius:20px; font-size:0.9rem; color:#ffd700; z-index:100; }
+    .market-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:15px; width:100%; max-height:65vh; overflow-y:auto; padding:10px 5px; }
+    .player-card { background:linear-gradient(145deg, #2a2d3e, #1e1f2e); border-radius:20px; padding:15px; text-align:center; border:1px solid rgba(255,215,0,0.15); }
+    .player-card img { width:100%; height:160px; object-fit:contain; border-radius:14px; margin-bottom:10px; background:#0f1018; }
+    .player-card .name { font-weight:600; font-size:1rem; color:#ffd700; margin-bottom:6px; }
+    .player-card .price { font-size:1rem; color:#2ecc71; font-weight:bold; margin-bottom:12px; }
     .lineup-pitch { width:100%; max-width:700px; aspect-ratio:1.8/1; background:linear-gradient(0deg, #2e8b57 0%, #3cb371 50%, #2e8b57 100%); border-radius:20px; position:relative; margin:15px auto; box-shadow:0 15px 25px rgba(0,0,0,0.5); border:3px solid rgba(255,255,255,0.2); overflow:hidden; }
     .lineup-pitch::before { content:''; position:absolute; top:50%; left:0; width:100%; height:2px; background:rgba(255,255,255,0.5); transform:translateY(-50%); }
     .lineup-pitch .center-circle { position:absolute; top:50%; left:50%; width:60px; height:60px; border:2px solid rgba(255,255,255,0.5); border-radius:50%; transform:translate(-50%,-50%); }
-    .player-slot { position:absolute; width:50px; height:50px; background:rgba(0,0,0,0.5); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid rgba(255,215,0,0.7); font-weight:bold; font-size:0.7rem; color:white; text-align:center; transition:all 0.2s; background-size:cover; background-position:center; overflow:hidden; }
+    .player-slot { position:absolute; width:60px; height:60px; background:rgba(0,0,0,0.5); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid rgba(255,215,0,0.7); font-weight:bold; font-size:0.8rem; color:white; text-align:center; transition:all 0.2s; background-size:contain; background-position:center; background-repeat:no-repeat; overflow:hidden; }
     .player-slot.empty { border:2px dashed rgba(255,255,255,0.3); background:rgba(255,255,255,0.05); }
     .player-slot:hover { transform:scale(1.1) translate(-50%,-50%); z-index:10; }
-    .player-slot .remove-btn { position:absolute; top:-5px; right:-5px; background:#e74c3c; border-radius:50%; width:18px; height:18px; font-size:10px; line-height:18px; text-align:center; color:white; display:none; cursor:pointer; }
+    .player-slot .remove-btn { position:absolute; top:-5px; right:-5px; background:#e74c3c; border-radius:50%; width:20px; height:20px; font-size:12px; line-height:20px; text-align:center; color:white; display:none; cursor:pointer; }
     .player-slot:hover .remove-btn { display:block; }
     #gameCanvas { width:100%; height:100%; display:block; }
     .game-ui { position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.7); backdrop-filter:blur(12px); padding:15px 20px; border-radius:20px; z-index:100; }
     .action-buttons { position:absolute; bottom:30px; left:50%; transform:translateX(-50%); display:flex; gap:20px; z-index:100; }
-    @media (max-width:600px) { h1 { font-size:1.8rem; } .card-panel { padding:20px 15px; } button { padding:12px 20px; font-size:0.9rem; } .player-slot { width:35px; height:35px; font-size:0.6rem; } }
+    @media (max-width:600px) {
+      h1 { font-size:1.8rem; } .card-panel { padding:20px 15px; } button { padding:12px 20px; font-size:0.9rem; }
+      .player-slot { width:45px; height:45px; font-size:0.7rem; }
+      .player-card img { height:120px; }
+    }
   </style>
 </head>
 <body>
@@ -81,6 +87,7 @@
 
     <!-- MENÚ PRINCIPAL -->
     <div id="main-menu-screen" class="screen hidden">
+      <div class="user-id-badge" id="user-id-badge">ID: ---</div>
       <div class="card-panel" style="max-width:600px;">
         <h1>Menú Principal</h1>
         <div style="background:rgba(255,215,0,0.1); border-radius:16px; padding:12px; margin:15px 0;">
@@ -129,10 +136,10 @@
       </div>
     </div>
 
-    <!-- PANEL ADMIN (URL) -->
+    <!-- PANEL ADMIN (AÑADIR CARTAS) -->
     <div id="admin-screen" class="screen hidden">
       <div class="card-panel">
-        <h2>🔧 Panel Administrador</h2>
+        <h2>🔧 Añadir Jugador al Mercado</h2>
         <input type="text" id="admin-player-name" placeholder="Nombre del jugador" />
         <label style="display:block; margin:10px 0; color:#ccc;">🔗 URL de la imagen del jugador:</label>
         <input type="text" id="admin-player-image-url" placeholder="https://ejemplo.com/imagen.jpg" />
@@ -143,6 +150,31 @@
         <button id="add-player-btn">Añadir al mercado</button>
         <p id="admin-msg" style="margin-top:10px; font-weight:500;"></p>
         <button id="close-admin" class="secondary">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- SÚPER PANEL ADMIN (GESTIÓN USUARIOS) -->
+    <div id="user-admin-screen" class="screen hidden">
+      <div class="card-panel" style="max-width:600px;">
+        <h2>👤 Administración de Usuarios</h2>
+        <input type="text" id="search-user-id" placeholder="ID de 3 letras" maxlength="3" style="text-transform:uppercase;" />
+        <button id="search-user-btn">Buscar usuario</button>
+        <div id="user-info" class="hidden" style="margin-top:15px; text-align:left;">
+          <p><strong>ID:</strong> <span id="u-id"></span></p>
+          <p><strong>Monedas:</strong> <span id="u-monedas"></span></p>
+          <label>Nueva cantidad de monedas:</label>
+          <input type="number" id="u-new-monedas" placeholder="Cantidad" />
+          <button id="u-update-monedas">Actualizar monedas</button>
+          <hr style="border-color:rgba(255,255,255,0.2); margin:15px 0;" />
+          <h3>Jugadores en plantilla</h3>
+          <div id="u-players-list" style="max-height:150px; overflow-y:auto;"></div>
+          <hr style="border-color:rgba(255,255,255,0.2); margin:15px 0;" />
+          <label>Añadir jugador por ID de mercado:</label>
+          <input type="text" id="u-market-id" placeholder="ID del jugador en mercado" />
+          <button id="u-add-market-player">Añadir jugador</button>
+          <p id="u-msg" style="margin-top:10px; color:#2ecc71;"></p>
+        </div>
+        <button id="close-user-admin" class="secondary" style="margin-top:15px;">Cerrar</button>
       </div>
     </div>
 
@@ -200,7 +232,9 @@
     </div>
   </div>
 
+  <!-- Botones ocultos -->
   <button class="logo-ft" id="admin-trigger">ft</button>
+  <button class="logo-p" id="user-admin-trigger">P</button>
 
   <script type="module">
     // ==================== CONFIGURACIÓN FIREBASE ====================
@@ -226,6 +260,7 @@
       lineup: document.getElementById('lineup-screen'),
       market: document.getElementById('market-screen'),
       admin: document.getElementById('admin-screen'),
+      userAdmin: document.getElementById('user-admin-screen'),
       gameMode: document.getElementById('game-mode-screen'),
       opponent: document.getElementById('opponent-screen'),
       game: document.getElementById('game-screen')
@@ -238,7 +273,7 @@
 
     // ==================== ESTADO GLOBAL ====================
     let currentUser = null;
-    let userData = { monedas: 0, jugadores: [], alineacion: '4-4-2', assignedSlots: {} };
+    let userData = { monedas: 0, jugadores: [], alineacion: '4-4-2', assignedSlots: {}, displayId: '' };
     const POSITIONS_BY_FORMATION = {
       '4-4-2': ['GK','LB','CB1','CB2','RB','LM','CM1','CM2','RM','ST1','ST2'],
       '4-3-3': ['GK','LB','CB1','CB2','RB','CM1','CM2','CM3','LW','ST','RW'],
@@ -249,6 +284,13 @@
       '4-1-4-1': ['GK','LB','CB1','CB2','RB','CDM','LM','CM1','CM2','RM','ST']
     };
 
+    function generateDisplayId() {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let id = '';
+      for (let i = 0; i < 3; i++) id += letters.charAt(Math.floor(Math.random() * letters.length));
+      return id;
+    }
+
     // ==================== AUTENTICACIÓN ====================
     const loginEmail = document.getElementById('login-email');
     const loginPass = document.getElementById('login-password');
@@ -257,29 +299,33 @@
     const authMsg = document.getElementById('auth-msg');
     const loadingArea = document.getElementById('loading-area');
 
-    function showLoading() {
-      loadingArea.classList.remove('hidden');
-      loginBtn.disabled = true;
-      registerBtn.disabled = true;
-    }
-
-    function hideLoading() {
-      loadingArea.classList.add('hidden');
-      loginBtn.disabled = false;
-      registerBtn.disabled = false;
-    }
+    function showLoading() { loadingArea.classList.remove('hidden'); loginBtn.disabled = true; registerBtn.disabled = true; }
+    function hideLoading() { loadingArea.classList.add('hidden'); loginBtn.disabled = false; registerBtn.disabled = false; }
 
     async function initUserData() {
       if (!currentUser) return;
       const userRef = db.ref(`users/${currentUser.uid}`);
       const snap = await userRef.once('value');
       if (!snap.exists()) {
-        await userRef.set({ monedas: 0, jugadores: [], alineacion: '4-4-2', assignedSlots: {} });
+        let newId = generateDisplayId();
+        // Evitar duplicados simple: si ya existe, reintentar (poco probable)
+        const idRef = db.ref(`displayIds/${newId}`);
+        const idSnap = await idRef.once('value');
+        while (idSnap.exists()) {
+          newId = generateDisplayId();
+        }
+        await idRef.set(currentUser.uid);
+        await userRef.set({ monedas: 0, jugadores: [], alineacion: '4-4-2', assignedSlots: {}, displayId: newId });
       } else {
         userData = snap.val();
         if (!userData.assignedSlots) userData.assignedSlots = {};
         if (!userData.jugadores) userData.jugadores = [];
         if (!userData.monedas) userData.monedas = 0;
+        if (!userData.displayId) {
+          userData.displayId = generateDisplayId();
+          await db.ref(`displayIds/${userData.displayId}`).set(currentUser.uid);
+          await userRef.update({ displayId: userData.displayId });
+        }
       }
     }
 
@@ -344,6 +390,7 @@
       document.getElementById('monedas-display').textContent = (userData.monedas || 0).toLocaleString();
       document.getElementById('play-btn').disabled = !(userData.jugadores && userData.jugadores.length > 0);
       document.getElementById('player-count').textContent = userData.jugadores ? userData.jugadores.length : 0;
+      document.getElementById('user-id-badge').textContent = 'ID: ' + (userData.displayId || '---');
     }
 
     // ==================== NAVEGACIÓN ====================
@@ -414,7 +461,7 @@
       userData.jugadores.forEach(player => {
         const card = document.createElement('div');
         card.style.cssText = 'background:#1e1f2e; border-radius:12px; padding:8px; width:100px; text-align:center; cursor:pointer;';
-        card.innerHTML = `<img src="${player.image || 'https://via.placeholder.com/100'}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px;" onerror="this.src='https://via.placeholder.com/100'"><p style="font-size:0.7rem; margin-top:4px;">${player.name}</p>`;
+        card.innerHTML = `<img src="${player.image || 'https://via.placeholder.com/100'}" style="width:100%; height:70px; object-fit:contain; border-radius:8px;" onerror="this.src='https://via.placeholder.com/100'"><p style="font-size:0.7rem; margin-top:4px;">${player.name}</p>`;
         card.addEventListener('click', () => {
           window._selectedPlayer = player;
           alert(`Jugador ${player.name} seleccionado. Haz clic en una posición del campo.`);
@@ -490,10 +537,10 @@
     }
     document.getElementById('back-from-market').addEventListener('click', () => showScreen('mainMenu'));
 
-    // ==================== PANEL ADMIN (URL) ====================
+    // ==================== PANEL ADMIN (AÑADIR CARTAS) ====================
     document.getElementById('admin-trigger').addEventListener('click', () => {
-      const password = prompt('Contraseña de administrador:');
-      if (password === 'Owner') showScreen('admin');
+      const pass = prompt('Contraseña de administrador:');
+      if (pass === 'Owner') showScreen('admin');
       else alert('Contraseña incorrecta.');
     });
     document.getElementById('close-admin').addEventListener('click', () => showScreen('mainMenu'));
@@ -504,12 +551,8 @@
 
     imageUrlInput.addEventListener('input', () => {
       const url = imageUrlInput.value.trim();
-      if (url) {
-        imagePreview.src = url;
-        imagePreviewContainer.style.display = 'block';
-      } else {
-        imagePreviewContainer.style.display = 'none';
-      }
+      if (url) { imagePreview.src = url; imagePreviewContainer.style.display = 'block'; }
+      else { imagePreviewContainer.style.display = 'none'; }
     });
 
     document.getElementById('add-player-btn').addEventListener('click', async () => {
@@ -523,14 +566,9 @@
       if (!name) { adminMsg.textContent = '❌ Introduce un nombre.'; adminMsg.style.color = '#e74c3c'; return; }
       if (!priceVal || isNaN(price) || price <= 0) {
         adminMsg.textContent = '❌ Precio inválido (número positivo).';
-        adminMsg.style.color = '#e74c3c';
-        return;
+        adminMsg.style.color = '#e74c3c'; return;
       }
-      if (!imageUrl) {
-        adminMsg.textContent = '❌ Debes pegar la URL de la imagen.';
-        adminMsg.style.color = '#e74c3c';
-        return;
-      }
+      if (!imageUrl) { adminMsg.textContent = '❌ Debes pegar la URL de la imagen.'; adminMsg.style.color = '#e74c3c'; return; }
 
       addBtn.disabled = true;
       addBtn.textContent = '⏳ Añadiendo...';
@@ -546,13 +584,88 @@
         document.getElementById('admin-player-price').value = '';
         imagePreviewContainer.style.display = 'none';
       } catch (error) {
-        console.error('Error en admin:', error);
         adminMsg.textContent = '❌ Error: ' + error.message;
         adminMsg.style.color = '#e74c3c';
       } finally {
         addBtn.disabled = false;
         addBtn.textContent = 'Añadir al mercado';
       }
+    });
+
+    // ==================== SÚPER PANEL ADMIN (GESTIÓN USUARIOS) ====================
+    document.getElementById('user-admin-trigger').addEventListener('click', () => {
+      const pass = prompt('Contraseña de administrador:');
+      if (pass === 'Owner') showScreen('userAdmin');
+      else alert('Contraseña incorrecta.');
+    });
+    document.getElementById('close-user-admin').addEventListener('click', () => showScreen('mainMenu'));
+
+    let currentManagedUserUid = null;
+    document.getElementById('search-user-btn').addEventListener('click', async () => {
+      const searchId = document.getElementById('search-user-id').value.trim().toUpperCase();
+      if (searchId.length !== 3) return alert('Introduce un ID de 3 letras.');
+      const idRef = db.ref(`displayIds/${searchId}`);
+      const snap = await idRef.once('value');
+      if (!snap.exists()) return alert('Usuario no encontrado.');
+      const uid = snap.val();
+      currentManagedUserUid = uid;
+      const userSnap = await db.ref(`users/${uid}`).once('value');
+      const uData = userSnap.val();
+      document.getElementById('u-id').textContent = uData.displayId || searchId;
+      document.getElementById('u-monedas').textContent = (uData.monedas || 0).toLocaleString();
+      document.getElementById('u-new-monedas').value = uData.monedas || 0;
+      const playersDiv = document.getElementById('u-players-list');
+      playersDiv.innerHTML = '';
+      if (uData.jugadores && uData.jugadores.length > 0) {
+        uData.jugadores.forEach((player, idx) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; background:#2a2d3e; padding:8px; border-radius:8px; margin:5px 0;';
+          div.innerHTML = `<span>${player.name}</span><button class="remove-player-btn" data-index="${idx}" style="background:#e74c3c; padding:5px 10px; font-size:0.8rem;">Quitar</button>`;
+          div.querySelector('.remove-player-btn').addEventListener('click', async () => {
+            if (!currentManagedUserUid) return;
+            const newJugadores = uData.jugadores.filter((_, i) => i !== idx);
+            await db.ref(`users/${currentManagedUserUid}/jugadores`).set(newJugadores);
+            // También limpiar assignedSlots que contengan ese id
+            const assigned = uData.assignedSlots || {};
+            for (let [pos, pid] of Object.entries(assigned)) {
+              if (pid === player.id) delete assigned[pos];
+            }
+            await db.ref(`users/${currentManagedUserUid}/assignedSlots`).set(assigned);
+            alert('Jugador eliminado.');
+            document.getElementById('search-user-btn').click(); // refrescar
+          });
+          playersDiv.appendChild(div);
+        });
+      } else {
+        playersDiv.innerHTML = '<p style="color:#aaa;">Sin jugadores.</p>';
+      }
+      document.getElementById('user-info').classList.remove('hidden');
+      document.getElementById('u-msg').textContent = '';
+    });
+
+    document.getElementById('u-update-monedas').addEventListener('click', async () => {
+      if (!currentManagedUserUid) return;
+      const newMonedas = parseInt(document.getElementById('u-new-monedas').value);
+      if (isNaN(newMonedas) || newMonedas < 0) return alert('Cantidad inválida.');
+      await db.ref(`users/${currentManagedUserUid}/monedas`).set(newMonedas);
+      document.getElementById('u-monedas').textContent = newMonedas.toLocaleString();
+      document.getElementById('u-msg').textContent = 'Monedas actualizadas.';
+    });
+
+    document.getElementById('u-add-market-player').addEventListener('click', async () => {
+      if (!currentManagedUserUid) return;
+      const marketId = document.getElementById('u-market-id').value.trim();
+      if (!marketId) return alert('Introduce el ID del jugador del mercado.');
+      const marketSnap = await db.ref(`market/${marketId}`).once('value');
+      if (!marketSnap.exists()) return alert('Ese jugador no existe en el mercado.');
+      const player = marketSnap.val();
+      const userSnap = await db.ref(`users/${currentManagedUserUid}`).once('value');
+      const uData = userSnap.val();
+      const newJugadores = [...(uData.jugadores || []), { id: marketId, name: player.name, image: player.image }];
+      await db.ref(`users/${currentManagedUserUid}/jugadores`).set(newJugadores);
+      await db.ref(`market/${marketId}`).remove(); // Opcional: eliminar del mercado
+      alert('Jugador añadido a la plantilla del usuario.');
+      document.getElementById('search-user-btn').click();
     });
 
     // ==================== MODOS Y RIVAL ====================
