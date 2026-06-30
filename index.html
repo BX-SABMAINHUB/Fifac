@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FIFA Mobile Web - Realista</title>
+  <title>FIFA Mobile Web – Edición Definitiva</title>
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <!-- Three.js -->
   <script type="importmap">
     { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
   </script>
@@ -35,10 +37,11 @@
     .market-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:15px; width:100%; max-height:65vh; overflow-y:auto; padding:10px 5px; }
     .player-card { background:linear-gradient(145deg, #2a2d3e, #1e1f2e); border-radius:20px; padding:15px; text-align:center; border:1px solid rgba(255,215,0,0.15); }
     .player-card img { width:100%; height:160px; object-fit:contain; border-radius:14px; margin-bottom:10px; background:#0f1018; }
-    .player-card .name { font-weight:600; font-size:1rem; color:#ffd700; margin-bottom:6px; }
+    .player-card .name { font-weight:600; font-size:1rem; color:#ffd700; margin-bottom:2px; }
+    .player-card .pid { font-size:0.7rem; color:#aaa; margin-bottom:6px; }
     .player-card .price { font-size:1rem; color:#2ecc71; font-weight:bold; margin-bottom:12px; }
 
-    /* ALINEACIÓN CLARA 4-4-2 */
+    /* Alineación 4-4-2 clara */
     .lineup-pitch { width:100%; max-width:700px; aspect-ratio:1.8/1; background:linear-gradient(0deg, #2e8b57 0%, #3cb371 50%, #2e8b57 100%); border-radius:20px; position:relative; margin:15px auto; box-shadow:0 15px 25px rgba(0,0,0,0.5); border:3px solid rgba(255,255,255,0.2); overflow:hidden; }
     .lineup-pitch::before { content:''; position:absolute; top:50%; left:0; width:100%; height:2px; background:rgba(255,255,255,0.5); transform:translateY(-50%); }
     .lineup-pitch .center-circle { position:absolute; top:50%; left:50%; width:70px; height:70px; border:2px solid rgba(255,255,255,0.5); border-radius:50%; transform:translate(-50%,-50%); }
@@ -49,7 +52,7 @@
     .player-slot:hover .remove-btn { display:block; }
     .slot-label { font-size:0.65rem; color:#ffd700; text-shadow:1px 1px 2px black; }
 
-    /* JOYSTICK */
+    /* Joystick */
     #joystick-container { position:absolute; bottom:30px; left:30px; width:120px; height:120px; z-index:200; pointer-events:auto; }
     #joystick-base { width:100%; height:100%; background:rgba(255,255,255,0.2); border-radius:50%; border:2px solid rgba(255,255,255,0.4); }
     #joystick-thumb { position:absolute; top:50%; left:50%; width:50px; height:50px; background:#ffd700; border-radius:50%; transform:translate(-50%,-50%); }
@@ -80,7 +83,7 @@
         <p id="auth-msg" style="color:#e74c3c; margin-top:12px;"></p>
         <div id="loading-area" class="hidden">
           <div class="loading-spinner"></div>
-          <p>⏳ Cargando, por favor espera...</p>
+          <p>⏳ Cargando...</p>
         </div>
       </div>
     </div>
@@ -100,14 +103,11 @@
       </div>
     </div>
 
-    <!-- ALINEACIÓN 4-4-2 CLARA -->
+    <!-- ALINEACIÓN 4-4-2 -->
     <div id="lineup-screen" class="screen hidden">
       <div class="card-panel" style="max-width:800px; width:100%;">
         <h2>Tu Alineación (4-4-2)</h2>
-        <div class="lineup-pitch" id="pitch-container">
-          <div class="center-circle"></div>
-          <!-- Slots fijos: POR, LD, DFC1, DFC2, LI, MD, MC1, MC2, MI, DC1, DC2 -->
-        </div>
+        <div class="lineup-pitch" id="pitch-container"><div class="center-circle"></div></div>
         <p style="color:#aaa;">Jugadores en plantilla: <span id="player-count">0</span></p>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
           <button id="save-formation-btn">Guardar cambios</button>
@@ -127,15 +127,17 @@
       </div>
     </div>
 
-    <!-- PANEL ADMIN AÑADIR CARTAS -->
+    <!-- PANEL ADMIN AÑADIR / EDITAR CARTAS -->
     <div id="admin-screen" class="screen hidden">
-      <div class="card-panel">
-        <h2>🔧 Añadir Jugador al Mercado</h2>
+      <div class="card-panel" style="max-width:600px;">
+        <h2>🔧 Administrar Mercado</h2>
         <input type="text" id="admin-player-name" placeholder="Nombre del jugador" />
-        <label style="display:block; margin:10px 0; color:#ccc;">🔗 URL de la imagen:</label>
-        <input type="text" id="admin-player-image-url" placeholder="https://..." />
-        <input type="number" id="admin-player-price" placeholder="Precio en monedas" />
-        <button id="add-player-btn">Añadir al mercado</button>
+        <input type="text" id="admin-player-image-url" placeholder="URL de la imagen" />
+        <input type="number" id="admin-player-price" placeholder="Precio" />
+        <button id="add-player-btn">Añadir nueva carta</button>
+        <hr style="border-color:rgba(255,255,255,0.2); margin:15px 0;">
+        <h3>Cartas existentes</h3>
+        <div id="admin-market-list" style="max-height:200px; overflow-y:auto; text-align:left;"></div>
         <p id="admin-msg" style="margin-top:10px;"></p>
         <button id="close-admin" class="secondary">Cerrar</button>
       </div>
@@ -217,8 +219,12 @@
     </div>
   </div>
 
+  <!-- Botones admin ocultos -->
   <button class="logo-ft" id="admin-trigger">ft</button>
   <button class="logo-p" id="user-admin-trigger">P</button>
+
+  <!-- Música de fondo (Mundial 2014 y 2018) -->
+  <audio id="bg-music" loop></audio>
 
   <script type="module">
     // ==================== CONFIGURACIÓN FIREBASE ====================
@@ -254,12 +260,39 @@
     let currentUser = null;
     let userData = { monedas:0, jugadores:[], alineacion:'4-4-2', assignedSlots:{}, displayId:'' };
     const FIXED_POSITIONS = ['POR', 'LD', 'DFC1', 'DFC2', 'LI', 'MD', 'MC1', 'MC2', 'MI', 'DC1', 'DC2'];
+
     function generateDisplayId() {
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       let id = '';
       for (let i=0;i<3;i++) id += letters[Math.floor(Math.random()*26)];
       return id;
     }
+
+    function generatePlayerId() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let id = '';
+      for (let i=0;i<4;i++) id += chars[Math.floor(Math.random()*chars.length)];
+      return id;
+    }
+
+    // ==================== MÚSICA DE FONDO ====================
+    const bgMusic = document.getElementById('bg-music');
+    const playlist = [
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Placeholder La La La
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'  // Placeholder Colors
+    ];
+    let currentTrack = 0;
+    bgMusic.src = playlist[currentTrack];
+    bgMusic.volume = 0.3;
+    bgMusic.addEventListener('ended', () => {
+      currentTrack = (currentTrack + 1) % playlist.length;
+      bgMusic.src = playlist[currentTrack];
+      bgMusic.play();
+    });
+    // Iniciar música al hacer clic en cualquier parte (política autoplay)
+    document.body.addEventListener('click', () => {
+      if (bgMusic.paused) bgMusic.play().catch(()=>{});
+    }, { once: true });
 
     // ==================== AUTENTICACIÓN ====================
     const loginEmail = document.getElementById('login-email'), loginPass = document.getElementById('login-password');
@@ -325,7 +358,6 @@
       } else { showScreen('login'); }
     });
 
-    // ==================== ESCUCHA DATOS ====================
     function listenToUserData() {
       if (!currentUser) return;
       db.ref(`users/${currentUser.uid}`).on('value', snap => {
@@ -349,7 +381,7 @@
     document.getElementById('market-btn').addEventListener('click', () => { loadMarket(); showScreen('market'); });
     document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
 
-    // ==================== ALINEACIÓN CLARA 4-4-2 ====================
+    // ==================== ALINEACIÓN 4-4-2 ====================
     const pitchContainer = document.getElementById('pitch-container');
     const availablePlayersDiv = document.getElementById('available-players');
 
@@ -357,27 +389,18 @@
       renderPitch();
       renderAvailablePlayers();
     }
-
     function renderPitch() {
       pitchContainer.innerHTML = '<div class="center-circle"></div>';
-      const positions = FIXED_POSITIONS;
-      positions.forEach((pos, index) => {
+      FIXED_POSITIONS.forEach(pos => {
         const slot = document.createElement('div');
         slot.className = 'player-slot';
         slot.dataset.position = pos;
-        // Coordenadas fijas para 4-4-2
-        let x, y;
-        if (pos === 'POR') { x = 0.08; y = 0.5; }
-        else if (pos === 'LD') { x = 0.25; y = 0.2; }
-        else if (pos === 'DFC1') { x = 0.25; y = 0.4; }
-        else if (pos === 'DFC2') { x = 0.25; y = 0.6; }
-        else if (pos === 'LI') { x = 0.25; y = 0.8; }
-        else if (pos === 'MD') { x = 0.5; y = 0.15; }
-        else if (pos === 'MC1') { x = 0.5; y = 0.38; }
-        else if (pos === 'MC2') { x = 0.5; y = 0.62; }
-        else if (pos === 'MI') { x = 0.5; y = 0.85; }
-        else if (pos === 'DC1') { x = 0.75; y = 0.35; }
-        else if (pos === 'DC2') { x = 0.75; y = 0.65; }
+        const coords = {
+          POR:[0.08,0.5], LD:[0.25,0.2], DFC1:[0.25,0.4], DFC2:[0.25,0.6], LI:[0.25,0.8],
+          MD:[0.5,0.15], MC1:[0.5,0.38], MC2:[0.5,0.62], MI:[0.5,0.85],
+          DC1:[0.75,0.35], DC2:[0.75,0.65]
+        };
+        const [x,y] = coords[pos];
         slot.style.left = `${x*100}%`;
         slot.style.top = `${y*100}%`;
         slot.style.transform = 'translate(-50%, -50%)';
@@ -397,12 +420,11 @@
         if (assignedId && userData.jugadores) {
           const player = userData.jugadores.find(p => p.id === assignedId);
           if (player) {
-            slot.style.backgroundImage = `url(${player.image || ''})`;
+            slot.style.backgroundImage = `url(${player.image||''})`;
             slot.style.backgroundColor = '#0a0f1e';
-            label.textContent = player.name.split(' ')[0]; // muestra nombre corto
+            label.textContent = player.name.split(' ')[0];
           }
         }
-
         slot.addEventListener('click', (e) => { if (e.target !== removeBtn) assignPlayerToPosition(pos); });
         pitchContainer.appendChild(slot);
       });
@@ -417,7 +439,8 @@
       userData.jugadores.forEach(player => {
         const card = document.createElement('div');
         card.style.cssText = 'background:#1e1f2e; border-radius:12px; padding:8px; width:100px; text-align:center; cursor:pointer;';
-        card.innerHTML = `<img src="${player.image||'https://via.placeholder.com/100'}" style="width:100%; height:70px; object-fit:contain; border-radius:8px;"><p style="font-size:0.7rem;">${player.name}</p>`;
+        card.innerHTML = `<img src="${player.image||'https://via.placeholder.com/100'}" style="width:100%; height:70px; object-fit:contain; border-radius:8px;">
+                          <p style="font-size:0.7rem;">${player.name}</p><p style="font-size:0.5rem; color:#aaa;">ID: ${player.pid||''}</p>`;
         card.addEventListener('click', () => {
           window._selectedPlayer = player;
           alert(`Jugador ${player.name} seleccionado. Toca una posición.`);
@@ -464,6 +487,7 @@
           card.innerHTML = `
             <img src="${item.image||'https://via.placeholder.com/150'}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/150'">
             <div class="name">${item.name}</div>
+            <div class="pid">ID: ${item.pid || id.substring(0,4)}</div>
             <div class="price">💰 ${item.price.toLocaleString()} monedas</div>
             <button class="buy-player" data-id="${id}" data-price="${item.price}">Comprar</button>
           `;
@@ -471,16 +495,18 @@
             const price = parseInt(e.target.dataset.price);
             if (userData.monedas < price) return alert('Monedas insuficientes.');
             if (!confirm(`¿Comprar a ${item.name} por ${price.toLocaleString()} monedas?`)) return;
-            const playerId = e.target.dataset.id;
-            const newJugadores = [...(userData.jugadores||[]), { id: playerId + '_' + Date.now(), name: item.name, image: item.image }];
-            const updates = {};
-            updates[`users/${currentUser.uid}/monedas`] = userData.monedas - price;
-            updates[`users/${currentUser.uid}/jugadores`] = newJugadores;
-            // NO eliminamos del mercado (stock infinito)
-            try {
-              await db.ref().update(updates);
-              alert('Jugador comprado exitosamente.');
-            } catch (err) { alert('Error: ' + err.message); }
+            const newPlayer = {
+              id: id + '_' + Date.now(),
+              name: item.name,
+              image: item.image,
+              pid: item.pid || id.substring(0,4)
+            };
+            const newJugadores = [...(userData.jugadores||[]), newPlayer];
+            await db.ref(`users/${currentUser.uid}`).update({
+              monedas: userData.monedas - price,
+              jugadores: newJugadores
+            });
+            alert('Jugador comprado.');
           });
           container.appendChild(card);
         });
@@ -488,31 +514,65 @@
     }
     document.getElementById('back-from-market').addEventListener('click', () => showScreen('mainMenu'));
 
-    // ==================== PANEL ADMIN AÑADIR CARTAS (URL) ====================
+    // ==================== PANEL ADMIN (AÑADIR / EDITAR CARTAS) ====================
     document.getElementById('admin-trigger').addEventListener('click', () => {
       const pass = prompt('Contraseña de administrador:');
-      if (pass === 'Owner') showScreen('admin'); else alert('Contraseña incorrecta.');
+      if (pass === 'Owner') { showScreen('admin'); loadAdminMarketList(); }
+      else alert('Contraseña incorrecta.');
     });
     document.getElementById('close-admin').addEventListener('click', () => showScreen('mainMenu'));
+
+    function loadAdminMarketList() {
+      const listDiv = document.getElementById('admin-market-list');
+      db.ref('market').once('value', snap => {
+        listDiv.innerHTML = '';
+        if (!snap.exists()) return;
+        const items = snap.val();
+        Object.entries(items).forEach(([id, item]) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; background:#2a2d3e; padding:5px; border-radius:8px; margin:3px 0;';
+          div.innerHTML = `<span>${item.name} (${item.price})</span>
+                           <button data-id="${id}" class="edit-mkt" style="background:#f1c40f; padding:3px 8px; font-size:0.7rem;">Editar</button>
+                           <button data-id="${id}" class="delete-mkt" style="background:#e74c3c; padding:3px 8px; font-size:0.7rem;">Eliminar</button>`;
+          div.querySelector('.delete-mkt').addEventListener('click', async (e) => {
+            await db.ref(`market/${e.target.dataset.id}`).remove();
+            loadAdminMarketList();
+          });
+          div.querySelector('.edit-mkt').addEventListener('click', (e) => {
+            const newName = prompt('Nuevo nombre:', item.name);
+            if (newName) {
+              const newPrice = prompt('Nuevo precio:', item.price);
+              if (newPrice && !isNaN(newPrice)) {
+                db.ref(`market/${e.target.dataset.id}`).update({ name: newName, price: parseInt(newPrice) });
+                loadAdminMarketList();
+              }
+            }
+          });
+          listDiv.appendChild(div);
+        });
+      });
+    }
+
     document.getElementById('add-player-btn').addEventListener('click', async () => {
       const name = document.getElementById('admin-player-name').value.trim();
       const imageUrl = document.getElementById('admin-player-image-url').value.trim();
       const price = parseInt(document.getElementById('admin-player-price').value);
       const msg = document.getElementById('admin-msg');
       if (!name || !imageUrl || !price || price<=0) return msg.textContent = 'Completa todos los campos.';
-      try {
-        await db.ref('market').push({ name, image: imageUrl, price });
-        msg.textContent = 'Jugador añadido.';
-        document.getElementById('admin-player-name').value = '';
-        document.getElementById('admin-player-image-url').value = '';
-        document.getElementById('admin-player-price').value = '';
-      } catch (e) { msg.textContent = 'Error: ' + e.message; }
+      const pid = generatePlayerId();
+      await db.ref('market').push({ name, image: imageUrl, price, pid });
+      msg.textContent = 'Carta añadida.';
+      document.getElementById('admin-player-name').value = '';
+      document.getElementById('admin-player-image-url').value = '';
+      document.getElementById('admin-player-price').value = '';
+      loadAdminMarketList();
     });
 
     // ==================== SÚPER PANEL ADMIN USUARIOS ====================
     document.getElementById('user-admin-trigger').addEventListener('click', () => {
       const pass = prompt('Contraseña de administrador:');
-      if (pass === 'Owner') showScreen('userAdmin'); else alert('Contraseña incorrecta.');
+      if (pass === 'Owner') showScreen('userAdmin');
+      else alert('Contraseña incorrecta.');
     });
     document.getElementById('close-user-admin').addEventListener('click', () => showScreen('mainMenu'));
     let currentManagedUserUid = null;
@@ -533,7 +593,7 @@
         uData.jugadores.forEach((p, i) => {
           const div = document.createElement('div');
           div.style.cssText = 'display:flex; justify-content:space-between; background:#2a2d3e; padding:5px; border-radius:8px; margin:3px 0;';
-          div.innerHTML = `<span>${p.name}</span><button data-idx="${i}" style="background:#e74c3c; padding:3px 8px; font-size:0.7rem;">Quitar</button>`;
+          div.innerHTML = `<span>${p.name} (ID: ${p.pid||'???'})</span><button data-idx="${i}" style="background:#e74c3c; padding:3px 8px; font-size:0.7rem;">Quitar</button>`;
           div.querySelector('button').addEventListener('click', async () => {
             const newJ = uData.jugadores.filter((_, j) => j !== i);
             await db.ref(`users/${currentManagedUserUid}/jugadores`).set(newJ);
@@ -569,7 +629,7 @@
       await db.ref(`rooms/${roomId}`).set({ host:currentUser.uid, guest:null, status:'waiting' });
       document.getElementById('room-status').textContent = `Sala ${code}. Esperando...`;
       db.ref(`rooms/${roomId}/guest`).on('value', snap => {
-        if (snap.val()) { startMatch(roomId); }
+        if (snap.val()) startMatch(roomId);
       });
     });
     document.getElementById('join-room-btn').addEventListener('click', () => {
@@ -584,7 +644,7 @@
     });
     document.getElementById('back-from-opponent').addEventListener('click', () => showScreen('gameMode'));
 
-    // ==================== PARTIDO 3D CON JOYSTICK Y HUMANOS ====================
+    // ==================== PARTIDO 3D CON JOYSTICK Y HUMANOS REALISTAS ====================
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -595,7 +655,6 @@
     function setupJoystick() {
       const base = document.getElementById('joystick-base');
       const thumb = document.getElementById('joystick-thumb');
-      const container = document.getElementById('joystick-container');
       let dragging = false;
       const handleMove = (clientX, clientY) => {
         const rect = base.getBoundingClientRect();
@@ -663,6 +722,7 @@
       if (renderer) renderer.dispose();
       renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x1a2b1f);
       camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
@@ -670,63 +730,86 @@
       camera.lookAt(0, 0, 0);
       const light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(10, 20, 10);
+      light.castShadow = true;
       scene.add(light);
       scene.add(new THREE.AmbientLight(0x404040));
       const grass = new THREE.Mesh(new THREE.PlaneGeometry(18,10), new THREE.MeshStandardMaterial({ color:0x2e8b57 }));
       grass.rotation.x = -Math.PI/2;
+      grass.receiveShadow = true;
       scene.add(grass);
       ball = new THREE.Mesh(new THREE.SphereGeometry(0.25, 32, 32), new THREE.MeshStandardMaterial({ color:0xffffff }));
       ball.position.set(0, 0.25, 0);
       ball.castShadow = true;
       scene.add(ball);
-      // Jugadores humanoides detallados
-      playerHome = createHumanoid(0x3a7bd5, 0xffdbac);
+      // Humanoides detallados
+      playerHome = createDetailedHumanoid(0x3a7bd5, 0xffdbac, '7');
       playerHome.position.set(-2, 0, 0);
-      playerAway = createHumanoid(0xe74c3c, 0xffdbac);
+      playerAway = createDetailedHumanoid(0xe74c3c, 0xffdbac, '10');
       playerAway.position.set(2, 0, 0);
+      // Porterías
       createGoal(-9, 0, 1.5, 0.5);
       createGoal(9, 0, 1.5, 0.5);
     }
 
-    function createHumanoid(shirtColor, skinColor) {
+    function createDetailedHumanoid(shirtColor, skinColor, number) {
       const group = new THREE.Group();
+      // Pantalón
+      const shortGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.25, 8);
+      const shortMat = new THREE.MeshStandardMaterial({ color:0x1a1a1a });
+      const shorts = new THREE.Mesh(shortGeo, shortMat);
+      shorts.position.y = -0.6;
+      group.add(shorts);
       // Piernas
-      const legGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.5, 8);
+      const legGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8);
       const legMat = new THREE.MeshStandardMaterial({ color:0x1a1a1a });
       const leftLeg = new THREE.Mesh(legGeo, legMat);
-      leftLeg.position.set(-0.15, -0.6, 0);
+      leftLeg.position.set(-0.12, -0.9, 0);
       group.add(leftLeg);
       const rightLeg = new THREE.Mesh(legGeo, legMat);
-      rightLeg.position.set(0.15, -0.6, 0);
+      rightLeg.position.set(0.12, -0.9, 0);
       group.add(rightLeg);
       // Cuerpo
-      const bodyGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.7, 8);
+      const bodyGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8);
       const bodyMat = new THREE.MeshStandardMaterial({ color:shirtColor });
       const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.position.y = -0.1;
+      body.position.y = -0.2;
       group.add(body);
+      // Dorsal en la espalda (sprite)
+      const canvas = document.createElement('canvas');
+      canvas.width = 64; canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 40px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(number, 32, 48);
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMat = new THREE.SpriteMaterial({ map: texture });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(0.3, 0.3, 1);
+      sprite.position.set(0, -0.1, -0.25);
+      group.add(sprite);
       // Brazos
-      const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8);
+      const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
       const armMat = new THREE.MeshStandardMaterial({ color:skinColor });
       const leftArm = new THREE.Mesh(armGeo, armMat);
-      leftArm.position.set(-0.28, -0.1, 0);
-      leftArm.rotation.z = 0.2;
+      leftArm.position.set(-0.28, -0.15, 0);
+      leftArm.rotation.z = 0.3;
       group.add(leftArm);
       const rightArm = new THREE.Mesh(armGeo, armMat);
-      rightArm.position.set(0.28, -0.1, 0);
-      rightArm.rotation.z = -0.2;
+      rightArm.position.set(0.28, -0.15, 0);
+      rightArm.rotation.z = -0.3;
       group.add(rightArm);
       // Cabeza
       const headGeo = new THREE.SphereGeometry(0.16, 8, 8);
       const headMat = new THREE.MeshStandardMaterial({ color:skinColor });
       const head = new THREE.Mesh(headGeo, headMat);
-      head.position.y = 0.45;
+      head.position.y = 0.35;
       group.add(head);
-      // Pelo (opcional)
+      // Pelo
       const hairGeo = new THREE.SphereGeometry(0.17, 8, 8);
       const hairMat = new THREE.MeshStandardMaterial({ color:0x111111 });
       const hair = new THREE.Mesh(hairGeo, hairMat);
-      hair.position.y = 0.5;
+      hair.position.y = 0.4;
       group.add(hair);
       scene.add(group);
       return group;
@@ -787,21 +870,17 @@
     function animate() {
       if (!renderer || matchState.finished) return;
       requestAnimationFrame(animate);
-      // Mover jugador local con joystick
       if (playerHome) {
         playerHome.position.x += joystickData.x * 0.05;
         playerHome.position.z += joystickData.y * 0.05;
-        // Limitar al campo
-        playerHome.position.x = Math.max(-8, Math.min(8, playerHome.position.x));
-        playerHome.position.z = Math.max(-4, Math.min(4, playerHome.position.z));
-        // Rotar jugador hacia la dirección
+        playerHome.position.x = Math.max(-8.5, Math.min(8.5, playerHome.position.x));
+        playerHome.position.z = Math.max(-4.5, Math.min(4.5, playerHome.position.z));
         if (Math.abs(joystickData.x) > 0.1 || Math.abs(joystickData.y) > 0.1) {
           playerHome.rotation.y = Math.atan2(joystickData.x, joystickData.y);
         }
       }
-      // Movimiento simple del bot
       if (playerAway && isVsBot) {
-        playerAway.position.z = Math.sin(Date.now() * 0.001) * 2;
+        playerAway.position.z = Math.sin(Date.now() * 0.001) * 3;
       }
       renderer.render(scene, camera);
     }
