@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FIFA Mobile Web – Edición Definitiva</title>
+  <title>FIFA Mobile Web – Con Música Mundialista</title>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -41,7 +41,6 @@
     .player-card .pid { font-size:0.7rem; color:#aaa; margin-bottom:6px; }
     .player-card .price { font-size:1rem; color:#2ecc71; font-weight:bold; margin-bottom:12px; }
 
-    /* Alineación 4-4-2 clara */
     .lineup-pitch { width:100%; max-width:700px; aspect-ratio:1.8/1; background:linear-gradient(0deg, #2e8b57 0%, #3cb371 50%, #2e8b57 100%); border-radius:20px; position:relative; margin:15px auto; box-shadow:0 15px 25px rgba(0,0,0,0.5); border:3px solid rgba(255,255,255,0.2); overflow:hidden; }
     .lineup-pitch::before { content:''; position:absolute; top:50%; left:0; width:100%; height:2px; background:rgba(255,255,255,0.5); transform:translateY(-50%); }
     .lineup-pitch .center-circle { position:absolute; top:50%; left:50%; width:70px; height:70px; border:2px solid rgba(255,255,255,0.5); border-radius:50%; transform:translate(-50%,-50%); }
@@ -52,7 +51,6 @@
     .player-slot:hover .remove-btn { display:block; }
     .slot-label { font-size:0.65rem; color:#ffd700; text-shadow:1px 1px 2px black; }
 
-    /* Joystick */
     #joystick-container { position:absolute; bottom:30px; left:30px; width:120px; height:120px; z-index:200; pointer-events:auto; }
     #joystick-base { width:100%; height:100%; background:rgba(255,255,255,0.2); border-radius:50%; border:2px solid rgba(255,255,255,0.4); }
     #joystick-thumb { position:absolute; top:50%; left:50%; width:50px; height:50px; background:#ffd700; border-radius:50%; transform:translate(-50%,-50%); }
@@ -219,12 +217,11 @@
     </div>
   </div>
 
-  <!-- Botones admin ocultos -->
   <button class="logo-ft" id="admin-trigger">ft</button>
   <button class="logo-p" id="user-admin-trigger">P</button>
 
-  <!-- Música de fondo (Mundial 2014 y 2018) -->
-  <audio id="bg-music" loop></audio>
+  <!-- Reproductor de música (SoundCloud) -->
+  <audio id="bg-music" loop style="display:none;"></audio>
 
   <script type="module">
     // ==================== CONFIGURACIÓN FIREBASE ====================
@@ -267,7 +264,6 @@
       for (let i=0;i<3;i++) id += letters[Math.floor(Math.random()*26)];
       return id;
     }
-
     function generatePlayerId() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let id = '';
@@ -275,11 +271,12 @@
       return id;
     }
 
-    // ==================== MÚSICA DE FONDO ====================
+    // ==================== MÚSICA DE FONDO (SOUNDCLOUD) ====================
     const bgMusic = document.getElementById('bg-music');
+    // Playlist: La La La (2014) y Colors (2018)
     const playlist = [
-      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Placeholder La La La
-      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'  // Placeholder Colors
+      'https://soundcloud.com/bart-j-simpson-extraterrestre/2014la-la-la?si=d6c0dab8f9134bbea510dea929bf5aa9&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing',
+      'https://soundcloud.com/jasonderulo/colors-coca-cola-anthem-for-the-2018-fifa-world-cup?si=6de817770a654f33ba70a71d172caae0&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
     ];
     let currentTrack = 0;
     bgMusic.src = playlist[currentTrack];
@@ -289,7 +286,7 @@
       bgMusic.src = playlist[currentTrack];
       bgMusic.play();
     });
-    // Iniciar música al hacer clic en cualquier parte (política autoplay)
+    // Activar música al primer clic en cualquier parte
     document.body.addEventListener('click', () => {
       if (bgMusic.paused) bgMusic.play().catch(()=>{});
     }, { once: true });
@@ -753,13 +750,11 @@
 
     function createDetailedHumanoid(shirtColor, skinColor, number) {
       const group = new THREE.Group();
-      // Pantalón
       const shortGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.25, 8);
       const shortMat = new THREE.MeshStandardMaterial({ color:0x1a1a1a });
       const shorts = new THREE.Mesh(shortGeo, shortMat);
       shorts.position.y = -0.6;
       group.add(shorts);
-      // Piernas
       const legGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8);
       const legMat = new THREE.MeshStandardMaterial({ color:0x1a1a1a });
       const leftLeg = new THREE.Mesh(legGeo, legMat);
@@ -768,13 +763,11 @@
       const rightLeg = new THREE.Mesh(legGeo, legMat);
       rightLeg.position.set(0.12, -0.9, 0);
       group.add(rightLeg);
-      // Cuerpo
       const bodyGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8);
       const bodyMat = new THREE.MeshStandardMaterial({ color:shirtColor });
       const body = new THREE.Mesh(bodyGeo, bodyMat);
       body.position.y = -0.2;
       group.add(body);
-      // Dorsal en la espalda (sprite)
       const canvas = document.createElement('canvas');
       canvas.width = 64; canvas.height = 64;
       const ctx = canvas.getContext('2d');
@@ -788,7 +781,6 @@
       sprite.scale.set(0.3, 0.3, 1);
       sprite.position.set(0, -0.1, -0.25);
       group.add(sprite);
-      // Brazos
       const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
       const armMat = new THREE.MeshStandardMaterial({ color:skinColor });
       const leftArm = new THREE.Mesh(armGeo, armMat);
@@ -799,13 +791,11 @@
       rightArm.position.set(0.28, -0.15, 0);
       rightArm.rotation.z = -0.3;
       group.add(rightArm);
-      // Cabeza
       const headGeo = new THREE.SphereGeometry(0.16, 8, 8);
       const headMat = new THREE.MeshStandardMaterial({ color:skinColor });
       const head = new THREE.Mesh(headGeo, headMat);
       head.position.y = 0.35;
       group.add(head);
-      // Pelo
       const hairGeo = new THREE.SphereGeometry(0.17, 8, 8);
       const hairMat = new THREE.MeshStandardMaterial({ color:0x111111 });
       const hair = new THREE.Mesh(hairGeo, hairMat);
