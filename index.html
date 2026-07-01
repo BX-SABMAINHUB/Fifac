@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FIFA Mobile Web – Con Música Mundialista</title>
+  <title>FIFA Mobile Web – Música Mundial</title>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -33,6 +33,7 @@
     @keyframes spin { to { transform:rotate(360deg); } }
     .logo-ft { position:fixed; bottom:15px; right:15px; font-size:12px; color:rgba(255,255,255,0.15); background:transparent; border:none; cursor:pointer; z-index:9999; }
     .logo-p { position:fixed; bottom:15px; left:15px; font-size:12px; color:rgba(255,255,255,0.15); background:transparent; border:none; cursor:pointer; z-index:9999; }
+    .music-btn { position:fixed; top:15px; left:15px; font-size:1.2rem; color:rgba(255,255,255,0.5); background:transparent; border:none; cursor:pointer; z-index:9999; }
     .user-id-badge { position:fixed; top:15px; right:15px; background:rgba(0,0,0,0.5); backdrop-filter:blur(5px); padding:8px 12px; border-radius:20px; font-size:0.9rem; color:#ffd700; z-index:100; }
     .market-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:15px; width:100%; max-height:65vh; overflow-y:auto; padding:10px 5px; }
     .player-card { background:linear-gradient(145deg, #2a2d3e, #1e1f2e); border-radius:20px; padding:15px; text-align:center; border:1px solid rgba(255,215,0,0.15); }
@@ -217,10 +218,12 @@
     </div>
   </div>
 
+  <!-- Botones fijos -->
+  <button class="music-btn" id="music-toggle">🎵</button>
   <button class="logo-ft" id="admin-trigger">ft</button>
   <button class="logo-p" id="user-admin-trigger">P</button>
 
-  <!-- Reproductor de música (SoundCloud) -->
+  <!-- Reproductor de audio (música de fondo) -->
   <audio id="bg-music" loop style="display:none;"></audio>
 
   <script type="module">
@@ -253,6 +256,46 @@
     };
     function showScreen(id) { Object.values(screens).forEach(s => s.classList.add('hidden')); if (screens[id]) screens[id].classList.remove('hidden'); }
 
+    // ==================== MÚSICA DE FONDO (MP3) ====================
+    const bgMusic = document.getElementById('bg-music');
+    const musicToggle = document.getElementById('music-toggle');
+    const playlist = [
+      'https://www.image2url.com/r2/default/audio/1782920720635-14690358-f0f7-4206-b0c5-5cf9c983c9ef.mp3', // La La La 2014
+      'https://www.image2url.com/r2/default/audio/1782920472180-846f7a4b-4c22-44d2-af2b-d19fa56f0982.mp3'  // Colors 2018
+    ];
+    let currentTrack = 0;
+    let musicPlaying = false;
+
+    function playMusic() {
+      bgMusic.src = playlist[currentTrack];
+      bgMusic.play().catch(()=>{});
+      musicPlaying = true;
+    }
+
+    bgMusic.addEventListener('ended', () => {
+      currentTrack = (currentTrack + 1) % playlist.length;
+      playMusic();
+    });
+
+    musicToggle.addEventListener('click', () => {
+      if (bgMusic.paused) {
+        playMusic();
+        musicToggle.textContent = '🔊';
+      } else {
+        bgMusic.pause();
+        musicToggle.textContent = '🎵';
+      }
+    });
+
+    // Iniciar música con el primer clic en cualquier parte
+    document.body.addEventListener('click', () => {
+      if (!musicPlaying) {
+        playMusic();
+        musicToggle.textContent = '🔊';
+        musicPlaying = true;
+      }
+    }, { once: true });
+
     // ==================== ESTADO GLOBAL ====================
     let currentUser = null;
     let userData = { monedas:0, jugadores:[], alineacion:'4-4-2', assignedSlots:{}, displayId:'' };
@@ -270,26 +313,6 @@
       for (let i=0;i<4;i++) id += chars[Math.floor(Math.random()*chars.length)];
       return id;
     }
-
-    // ==================== MÚSICA DE FONDO (SOUNDCLOUD) ====================
-    const bgMusic = document.getElementById('bg-music');
-    // Playlist: La La La (2014) y Colors (2018)
-    const playlist = [
-      'https://soundcloud.com/bart-j-simpson-extraterrestre/2014la-la-la?si=d6c0dab8f9134bbea510dea929bf5aa9&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing',
-      'https://soundcloud.com/jasonderulo/colors-coca-cola-anthem-for-the-2018-fifa-world-cup?si=6de817770a654f33ba70a71d172caae0&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
-    ];
-    let currentTrack = 0;
-    bgMusic.src = playlist[currentTrack];
-    bgMusic.volume = 0.3;
-    bgMusic.addEventListener('ended', () => {
-      currentTrack = (currentTrack + 1) % playlist.length;
-      bgMusic.src = playlist[currentTrack];
-      bgMusic.play();
-    });
-    // Activar música al primer clic en cualquier parte
-    document.body.addEventListener('click', () => {
-      if (bgMusic.paused) bgMusic.play().catch(()=>{});
-    }, { once: true });
 
     // ==================== AUTENTICACIÓN ====================
     const loginEmail = document.getElementById('login-email'), loginPass = document.getElementById('login-password');
@@ -738,12 +761,10 @@
       ball.position.set(0, 0.25, 0);
       ball.castShadow = true;
       scene.add(ball);
-      // Humanoides detallados
       playerHome = createDetailedHumanoid(0x3a7bd5, 0xffdbac, '7');
       playerHome.position.set(-2, 0, 0);
       playerAway = createDetailedHumanoid(0xe74c3c, 0xffdbac, '10');
       playerAway.position.set(2, 0, 0);
-      // Porterías
       createGoal(-9, 0, 1.5, 0.5);
       createGoal(9, 0, 1.5, 0.5);
     }
